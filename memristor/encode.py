@@ -1,6 +1,9 @@
+from utility import *
+
 
 class QEncoder(object):
     """
+    UNUSED
     Takes as input an NxMxW data array and applies a quantum encoding in given dimension
     """
 
@@ -19,7 +22,6 @@ class QEncoder(object):
         self.topology = topology
         # calculate system dimension
         self.dim = qop.fock_dim(self.modes, self.photons)
-
 
     def _granulate(self, data, levels=2, positive=True):
         """
@@ -91,7 +93,7 @@ class QEncoder(object):
         encodings = basis_generator(self.dim)
 
         # perform in-place shuffle of encoding states if requested 
-        if rand_encoding:
+        if self.rand_encoding:
             np.random.shuffle(encodings)
 
         # assert encoding is sufficent assuming binary data
@@ -115,14 +117,13 @@ class QEncoder(object):
                 ind = int(''.join(str(s) for s in classical_state), 2)
 
                 # map classical binary data to a quantum state
-                if density:
-                    state = encodings[ind,:].reshape([-1,1])
-                    data_encode[i,j,:,:] = np.kron(state, dagger(state))
+                if self.density:
+                    state = encodings[ind, :].reshape([-1, 1])
+                    data_encode[i, j, :, :] = np.kron(state, dagger(state))
                 else:
-                    data_encode[i,j,:] = encodings[ind,:]
+                    data_encode[i, j, :] = encodings[ind, :]
 
         return data_encode
-
 
     def _amplitude_map(self, data, levels=0,):
         """
@@ -164,12 +165,11 @@ class QEncoder(object):
                 # assign to output set
                 if self.density:
                     state = state.reshape([-1,1])
-                    data_encode[i,t,:,:] = np.kron(state, dagger(state))
+                    data_encode[i, t, :, :] = np.kron(state, dagger(state))
                 else:
-                    data_encode[i,t,:] = state
+                    data_encode[i, t, :] = state
 
         return data_encode
-
 
     def _milano_topology_gen(self):
         """
@@ -177,16 +177,15 @@ class QEncoder(object):
         """
 
         # Topology is fixed, thus hardcoding
-        first_layer = [[2,3],[6,7,],[10,11]]
-        second_layer = [[1,2],[3,4],[5,6],[7,8],[9,10],[11,12]]
-        third_layer = [[2,3],[4,5],[6,7],[8,9],[10,11]]
-        fourth_layer = [[1,2],[3,4],[5,6],[7,8],[9,10],[11,12]]
+        first_layer = [[2, 3], [6, 7], [10, 11]]
+        second_layer = [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10], [11, 12]]
+        third_layer = [[2, 3], [4, 5], [6, 7], [8, 9], [10, 11]]
+        fourth_layer = [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10], [11, 12]]
 
         # compile topology list and return in reverse order 
         return fourth_layer+third_layer+second_layer+first_layer
 
-
-    def _milano_map(self, data, parse=False, masks=None, input_state=None, base=[0,2*np.pi/3,4*np.pi/3]):
+    def _milano_map(self, data, parse=False, masks=None, input_state=None, base=[0, 2*np.pi/3, 4*np.pi/3]):
         """
         A highly specific encoding scheme using Milano optical chip - use eigenstate or amplitude encoding unless you know 
         what you are doing!
@@ -194,7 +193,7 @@ class QEncoder(object):
         This encoding assumes a constant input state and then configures an optical map that  
         """
         # get shape of array and package as instance, input dimension and time series length
-        N,in_dim,tlen = np.shape(data)
+        N, in_dim, tlen = np.shape(data)
 
         # granulate data to be accepted to our encoding scheme
 
@@ -205,7 +204,7 @@ class QEncoder(object):
         # generate initial input state if not defined (assumes mode and photon numbers)
         if input_state is None:
             # 12 modes, 3 photons
-            nstate = [0,0,1,0,0,0,1,0,0,0,1,0]
+            nstate = [0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0]
             # make use of qfunk optical library
             input_state = qop.optical_state_gen(m_num=self.modes, p_num=self.photons, nstate=nstate, density=False)
 
@@ -269,9 +268,9 @@ class QEncoder(object):
                 state = U @ input_state
 
                 if self.density:
-                    data_encode[i,t,:,:] = np.kron(state, dagger(state))
+                    data_encode[i, t, :, :] = np.kron(state, dagger(state))
                 else:
-                    data_encode[i,t,:] = state
+                    data_encode[i, t, :] = state
 
         return data_encode
 

@@ -1,16 +1,11 @@
-import numpy as np
-import matplotlib.pyplot as plt 
+import matplotlib.pyplot as plt
 from keras.layers import Input, Layer
 import collections
-from math import log, exp
 
 import qfunk.qoptic as qop
 from qinfo.qinfo import dagger, haar_sample, multikron, gellman_gen, random_U
-from ucell import *
 from ucell.utility import *
 from test_data import *
-
-
 
 
 class QMemristor(object):
@@ -197,8 +192,6 @@ class QMemristor(object):
         self.unitary_array[time_index,:,:] = self.S @ multikron(unitary, self.photons) @ np.transpose(self.S)
 
 
-
-
 class BSArray():
     """
     Advanced layer that implements a stack of quantum memristors acting in parallel. 
@@ -254,7 +247,6 @@ class BSArray():
         # set build flag
         self.built = True
 
-
     def call(self, input_states):
         """This is where the layer's logic lives.
         Arguments:
@@ -271,7 +263,6 @@ class BSArray():
         input_states = np.einsum('bkil,lj->bkij', input_left, dagger(self.unitary))        
 
         return input_states
-
 
 
 class MeasureLayer(Layer):
@@ -304,7 +295,6 @@ class MeasureLayer(Layer):
 
         super(MeasureLayer, self).__init__(**kwargs)
 
-
     def build(self, input_shape):
         """
         Build method for layer
@@ -312,7 +302,6 @@ class MeasureLayer(Layer):
 
         # set build flag
         self.built = True
-
 
     def call(self, inputs):
         """This is where the layer's logic lives.
@@ -330,7 +319,6 @@ class MeasureLayer(Layer):
 
         # rescale and return
         return diag
-
 
     def compute_output_shape(self, input_shape):
         return tf.TensorShape([None, self.output_dim])
@@ -367,6 +355,7 @@ class LearningRateDecay():
         plt.xlabel("Epoch #")
         plt.ylabel("Learning Rate")
 
+
 class PolynomialDecay(LearningRateDecay):
     def __init__(self, maxEpochs=100, initAlpha=0.01, power=1.0):
         # store the maximum number of epochs, base learning rate,
@@ -382,6 +371,7 @@ class PolynomialDecay(LearningRateDecay):
         
         # return the new learning rate
         return float(alpha)
+
 
 def basis_generator(dim):
     """
@@ -403,6 +393,10 @@ def basis_generator(dim):
             cnt +=1
 
     return state_encoding
+
+
+def mask_generator(in_dim, param):
+    pass
 
 
 class QEncoder(object):
@@ -465,16 +459,16 @@ class QEncoder(object):
             print("Data normalisation has been requested")
             data /= np.max(data)
 
-        # separate map mathods for compartmentalisation
-        if method is "eigen":
+        # separate map methods for compartmentalisation
+        if method == "eigen":
             print("Applying Gellman basis eigenstate map")
             return self._eigen_map(data=data)
 
-        elif method is "milano":
+        elif method == "milano":
             print("Applying milano topological map")
             return self._milano_map(data=data)
 
-        elif method is "amplitude":
+        elif method == "amplitude":
             
             if self.vector_map is None:
                 print("Random vector map not initialised, creating one now")
@@ -498,7 +492,7 @@ class QEncoder(object):
         data = self._granulate(data, levels=2)
 
         # get shape of array and package as instance, input dimension and time series length
-        N,in_dim,tlen = np.shape(data)
+        N, in_dim, tlen = np.shape(data)
 
         # generate state encodings - assume modes and photons are enough
         encodings = basis_generator(self.dim)
@@ -508,17 +502,17 @@ class QEncoder(object):
             np.random.shuffle(encodings)
 
         # assert encoding is sufficent assuming binary data
-        assert 2**in_dim<=len(encodings), "Woah hey woah, your system size is not sufficient to encode all states: {}<{}".format(len(encodings), 2**in_dim) 
+        assert 2**in_dim <= len(encodings), "Woah hey woah, your system size is not sufficient to encode all states: {}<{}".format(len(encodings), 2**in_dim)
 
         # preallocate output encoding array as vector state or density operator
         if self.density:
-            data_encode = np.zeros((N,tlen,self.dim,self.dim), dtype=np.complex64)
+            data_encode = np.zeros((N, tlen, self.dim, self.dim), dtype=np.complex64)
         else:
-            data_encode = np.zeros((N,tlen,self.dim), dtype=np.complex64)
+            data_encode = np.zeros((N, tlen, self.dim), dtype=np.complex64)
 
         # no doubt there is a smarter way of computing this but it doesn't matter for such small problem sizes
         for i in range(N):
-            if i % 100==0:
+            if i % 100 == 0:
                 print("{}/{} images encoded in quantum state space".format(i,N), end="\r")
             for j in range(tlen):
                 # get classical state
@@ -536,7 +530,6 @@ class QEncoder(object):
 
         return data_encode
 
-
     def _amplitude_map(self, data, levels=0,):
         """
         Generates a standard amplitude encoding scheme. Hard to prepare in practice
@@ -544,7 +537,7 @@ class QEncoder(object):
         """
 
         # get shape of array and package as instance, input dimension and time series length
-        N,in_dim,tlen = np.shape(data)
+        N, in_dim, tlen = np.shape(data)
 
         # check whether to apply any kind of granulation effect
         if levels>0:
@@ -553,7 +546,7 @@ class QEncoder(object):
 
         # preallocate output encoding array as vector state or density operator
         if self.density:
-            data_encode = np.zeros((N,tlen,self.dim,self.dim), dtype=np.complex64)
+            data_encode = np.zeros((N, tlen, self.dim, self.dim), dtype=np.complex64)
         else:
             data_encode = np.zeros((N,tlen,self.dim), dtype=np.complex64)
 
@@ -584,7 +577,6 @@ class QEncoder(object):
         print()
         return data_encode
 
-
     def _milano_topology_gen(self):
         """
         Creates a topology specifier for the Milano chip.
@@ -599,7 +591,6 @@ class QEncoder(object):
         # compile topology list and return in reverse order 
         return fourth_layer+third_layer+second_layer+first_layer
 
-
     def _milano_map(self, data, parse=False, masks=None, input_state=None, base=[0,2*np.pi/3,4*np.pi/3]):
         """
         A highly specific encoding scheme using Milano optical chip - use eigenstate or amplitude encoding unless you know 
@@ -608,7 +599,7 @@ class QEncoder(object):
         This encoding assumes a constant input state and then configures an optical map that  
         """
         # get shape of array and package as instance, input dimension and time series length
-        N,in_dim,tlen = np.shape(data)
+        N, in_dim, tlen = np.shape(data)
 
         # granulate data to be accepted to our encoding scheme
 
@@ -688,8 +679,6 @@ class QEncoder(object):
                     data_encode[i,t,:] = state
 
         return data_encode
-
-
 
 
 def eigen_encode_map(data, modes, photons, rand_encoding=False, density=True):
@@ -826,7 +815,6 @@ def remove_contradicting(xs, ys):
     return np.array(new_x), np.array(new_y)
 
 
-
 def binarise(data):
     """
     Converts input image data to a classical binary representation. assumes uint8 input
@@ -840,13 +828,13 @@ def binarise(data):
     return data.astype(np.uint8)
 
 
-
 def probfid2(rho, gamma):
     """
     Computes output probability distribution of two density operators and computes
     their relative entropy
     """
     return tf.keras.losses.KLD(rho, gamma)
+
 
 def ent_gen(dim, vec=False):
     """
@@ -871,18 +859,17 @@ def ent_gen(dim, vec=False):
     else:
         return np.kron(ent, dagger(ent))/dim
 
+
 def entanglement_gen(dim, num=100, partition=0.5, embed_dim=None):
     """
     Generates a set of training and testing data for bipartite entanglement witnesses.
     dim gives the dimension of the subsystem and embed dim places the generated states
     into larger Hilbert space
     """
-
-
     # generate entangled state
     ent_state = ent_gen(dim)
 
-    # generate base seperable state
+    # generate base separable state
     sep_state = np.ones((dim**2, dim**2),dtype=np.complex128)/dim**2
 
     # check if embedding must occur
@@ -903,7 +890,7 @@ def entanglement_gen(dim, num=100, partition=0.5, embed_dim=None):
         U_sep = np.kron(np.squeeze(random_U(dim=dim, num=1)), np.squeeze(random_U(dim=dim, num=1)))
         # apply to entangled state and add to collection
         ent_states[i,0,:dim**2,:dim**2] = np.squeeze(haar_sample(dim=dim**2,num=1)) #U_ent @ ent_state @ dagger(U_ent)
-        # apply seperable state and add to collection
+        # apply separable state and add to collection
         sep_states[i,0,:dim**2,:dim**2] = U_sep @ sep_state @ dagger(U_sep)
 
     # generate labels
@@ -914,7 +901,7 @@ def entanglement_gen(dim, num=100, partition=0.5, embed_dim=None):
     entangled_data = np.concatenate([sep_states, ent_states], axis=0)
     entangled_labels = np.concatenate([sep_labels, ent_labels], axis=0)
 
-    # shuffle everything using repeateable rng state
+    # shuffle everything using repeatable rng state
     seed_state = np.random.get_state()
     np.random.shuffle(entangled_data)
     np.random.set_state(seed_state)
@@ -931,14 +918,12 @@ def entanglement_gen(dim, num=100, partition=0.5, embed_dim=None):
     test_label = entangled_labels[partition_index:]
 
     # return it all
-    return train_data,train_label,test_data,test_label
-
-
+    return train_data, train_label, test_data, test_label
 
 
 if __name__ == '__main__':
-    pdesc = {'modes':3, 'photons':2}
+    pdesc = {'modes': 3, 'photons': 2}
     modes = 3
     photons = 2
     print(number_states(modes, photons))
-    new_data = encode_map(data, modes, photons)
+    new_data = eigen_encode_map(data, modes, photons)

@@ -2,46 +2,36 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import os
-import sys
-import copy
-import time
 import keras
-import warnings
-import collections
 
-import numpy as np
+# Class implementing quantum memristor:
 from utility import *
+
 from test_data import *
 import tensorflow as tf
-from qinfo.qinfo import partial_trace2
 from keras.models import Model
-import matplotlib.pyplot as plt
 from keras.layers import Input
-from datetime import datetime
 from keras import optimizers
 from scipy.special import comb
 from keras.initializers import RandomUniform, Identity
-from keras.layers import Dense, ReLU
-from keras import activations
-from keras.callbacks import LearningRateScheduler, TensorBoard
-from ucell.ucell import UParamLayer, RevDense, ReNormaliseLayer, ULayer
+from keras.layers import Dense
 
+"""
+UNUSED!!!
+"""
 
-config = tf.compat.v1.ConfigProto(intra_op_parallelism_threads=12, 
-                        inter_op_parallelism_threads=12, 
-                        allow_soft_placement=True,
-                        device_count = {'CPU': 24})
+config = tf.compat.v1.ConfigProto(intra_op_parallelism_threads=12,
+								  inter_op_parallelism_threads=12,
+								  allow_soft_placement=True,
+								  device_count = {'CPU': 24})
 
 session = tf.compat.v1.Session(config=config)
-#np.random.seed(1234)
-
 
 # ------------------------------------------------------------
 # Section 0: Program parameter definitions
 # ------------------------------------------------------------
 # define target modes of memristors
-targets = [[1,2,3],[4,5,6]]
+targets = [[1, 2, 3], [4, 5, 6]]
 # define temporal depth
 temporal_num = 1
 # define total mode number
