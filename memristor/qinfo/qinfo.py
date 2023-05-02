@@ -6,18 +6,15 @@ A collection of useful functions for problems in quantum information theory.
 import numpy as np
 from scipy.linalg import sqrtm,block_diag
 from itertools import product
-from qinfo.operators import op
-#import tensorflow as tf
+from memristor.qinfo.operators import op
+import tensorflow as tf
 import cvxpy
-
 
 # TODO: redo partial trace function to compute it for arbitrary dimensional subsystems
 
 
-
 # compute effect of a CPTP map
 def CPTP(kraus, rho):
-
     """
     Class definition that handles signal reconstruction of a transformed input signal given
     the measurement basis. Able to perform standard compressed sensing and compressive 
@@ -758,7 +755,6 @@ def UA_gen(U):
         "length": len(svector) 
         Optional arguments - some are required for different functionality
 
-
     Returns
     -------
     CAOptimise class instance
@@ -768,7 +764,6 @@ def UA_gen(U):
     KeyError
         If no measurement transform has been specified.
     """
-
 
     """
     Performs process tomography on an input unitary U
@@ -816,7 +811,6 @@ def AB_join(A1, A2):
         "length": len(svector) 
         Optional arguments - some are required for different functionality
 
-
     Returns
     -------
     CAOptimise class instance
@@ -826,7 +820,6 @@ def AB_join(A1, A2):
     KeyError
         If no measurement transform has been specified.
     """
-
 
     """
     Joins two A (or B? - investigate) form maps into a single operator on the joint Hilbert space. 
@@ -973,7 +966,6 @@ def tracenorm(m):
     KeyError
         If no measurement transform has been specified.
     """
-
 
     import numpy.linalg
     return np.sum(np.abs(numpy.linalg.eigh(m)[0]))
@@ -1126,22 +1118,21 @@ def random_O(dim, num=1):
     Generate num random unitaries on N qubits using standard sampling strategy
     """
     # preallocate U array
-    Us = np.zeros((num, dim,dim))
+    Us = np.zeros((num, dim, dim))
 
     # generate unitaries using naive method
     for i in range(0,num):
         # generate a random complex matrix (yes I know I could do this in one go rather than iterate)
-        U = np.random.rand(dim,dim) 
+        U = np.random.rand(dim, dim)
 
         # QR factorisation
-        [Q,R] = np.linalg.qr(U/np.sqrt(2))
+        [Q, R] = np.linalg.qr(U/np.sqrt(2))
         R = np.diag(np.diag(R)/np.abs(np.diag(R)))
         
         # compute the unitary
-        Us[i,:,:] = Q @ R
+        Us[i, :, :] = Q @ R
 
     return Us
-
 
 
 def haar_sample(dim=2, num=10, pure=True):
@@ -1438,7 +1429,6 @@ def qre(rho, gamma):
 
 
 def kolmogorov(rho, gamma):
-
     """
     Class definition that handles signal reconstruction of a transformed input signal given
     the measurement basis. Able to perform standard compressed sensing and compressive 
@@ -2061,7 +2051,7 @@ def Universal_U():
     U = kronjob([ops['s'], ops['id']], [1,1,0,1,1]) @ U
 
     # finally some T gate action
-    U = kronjob([ops['id'],ops['t'],ops['s']],[1,1,1,2,0])
+    U = kronjob([ops['id'], ops['t'], ops['s']],[1,1,1,2,0])
 
     return U
 
@@ -2270,8 +2260,8 @@ def is_choi(A, tol=1e-6):
     eigen_vals = np.linalg.eigvals(A)
 
     # zero small negative values within tolerance
-    small_neg_ind = -tol<eigen_vals<0 
-    eigen_vals[-tol<eig_vals[eigvals<0]] = 0
+    small_neg_ind = -tol < eigen_vals < 0
+    eigen_vals[-tol < eig_vals[eigvals < 0]] = 0
 
     # ensure positive semidefinitess
 
@@ -2521,7 +2511,6 @@ def tf_multikron(A,r):
         B = tf.linalg.LinearOperatorKronecker([B,A])
 
     return tf.convert_to_tensor(B.to_dense(),dtype=tf.complex64)
-    
 
 
 def dagger(M):
@@ -2542,8 +2531,7 @@ def MUB_gen(d):
     mub = np.zeros((d+1,d,d,d),dtype=np.complex128)
     # assign computational basis
     for i in range(d):
-        mub[0,i,i,i] = 1.0
-
+        mub[0, i, i, i] = 1.0
 
     for k in range(1,d+1):
         for m in range(d):
@@ -2551,7 +2539,6 @@ def MUB_gen(d):
             for l in range(d):
                 el = mub[0,l,:,l].reshape(d,1)
                 state += w**(k*(l**2)+m*l) * el/np.sqrt(d)   
-            mub[k,m,:,:] = np.kron(state, dagger(state))
+            mub[k, m, :, :] = np.kron(state, dagger(state))
 
     return mub
-

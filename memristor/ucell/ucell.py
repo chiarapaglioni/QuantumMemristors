@@ -2,23 +2,13 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import tensorflow as tf
-import math
-import numpy as np
-
-from scipy.special import comb
-from keras import optimizers
 from keras.layers import Input, Layer
-from keras.models import Model
-from keras import callbacks
 from keras import backend
-from datetime import datetime
-from qinfo.qinfo import haar_sample, dagger, multikron, dirsum
-from ucell.utility import *
-from ucell.operators import *
+from memristor.ucell.utility import *
+from memristor.ucell.operators import *
 
 # For the love of god, please be quiet
-#tf.logging.set_verbosity(tf.logging.ERROR)
+# tf.logging.set_verbosity(tf.logging.ERROR)
 
 
 class ReNormaliseLayer(Layer):
@@ -33,7 +23,6 @@ class ReNormaliseLayer(Layer):
         self.input_dim = self.output_dim = dim
         # pass additional keywords to superclass initialisation
         super(ReNormaliseLayer, self).__init__(**kwargs)
-
 
     def build(self, input_shape):
         """Creates the variables of the layer (optional, for subclass implementers).
@@ -123,11 +112,11 @@ class ULayer(Layer):
         
         # keep local copy of beam splitter decomposition table
         # TODO: This is such a cop out
+        from memristor.ucell.utility import clements_phase_end
         self.bms_spec = clements_phase_end(np.eye(self.modes))[0]
 
         # pass additional keywords to superclass initialisation
         super(ULayer, self).__init__(**kwargs)
-
 
     def build(self, input_shape):
         """Creates the variables of the layer (optional, for subclass implementers).
@@ -242,7 +231,6 @@ class ULayer(Layer):
         """
         # compute transpose of unitary
         self.unitary = tf.tranpose(self.unitary, conjugate=True, name="dagger_op")
-
 
     def compute_output_shape(self, input_shape):
         shape = tf.TensorShape(input_shape).as_list()
@@ -425,7 +413,6 @@ class UParamLayer(Layer):
         # ensure input is list
         # if not isinstance(inputs, list):
         #     raise TypeError("Input to UParamLayer must be list of tensors containg input states and Unitary spec, instead is {}".format(type(inputs)))
-
         # segregate inputs - why the fuck is the operator being rebuilt every time!?
         params = inputs[0]
         input_state = inputs[1]
@@ -460,7 +447,6 @@ class UParamLayer(Layer):
         # segregate theta and phi parameters of the MZI
         theta = params[:self.element_num]
         phi = params[self.element_num:2*self.element_num]
-
 
         # compute unitary by hijacking clements decomposition code
         return tf_clements_stitch(beam_spec=self.bms_spec, 
@@ -517,7 +503,6 @@ class IsometricLayer(Layer):
 
         super(IsometricLayer, self).__init__(**kwargs)
 
-
     def build(self, input_shape):
         """
         Construct projection operator for layer - non-trainable.
@@ -542,7 +527,6 @@ class IsometricLayer(Layer):
         # call build method of super class
         super(IsometricLayer, self).build(input_shape)
 
-
     def call(self, inputs):
         """This is where the layer's logic lives.
         Arguments:
@@ -560,7 +544,6 @@ class IsometricLayer(Layer):
         out = tf.reduce_sum(right, axis=[0], name='Projector_sum')
 
         return out
-
 
     def compute_output_shape(self, input_shape):
         shape = tf.TensorShape(input_shape).as_list()
@@ -608,7 +591,6 @@ class ProjectionLayer(Layer):
 
         super(ProjectionLayer, self).__init__(**kwargs)
 
-
     def build(self, input_shape):
         """
         Construct projection operator for layer - non-trainable.
@@ -630,7 +612,6 @@ class ProjectionLayer(Layer):
         # returns an m x dim x dim array with m being the number of projectors to apply
         self.proj = povm_gen(self.pdesc, convert=True)
 
-
     def call(self, inputs):
         """This is where the layer's logic lives.
         Arguments:
@@ -649,7 +630,6 @@ class ProjectionLayer(Layer):
         out = tf.reduce_sum(right, axis=[0], name='Projector_sum')
 
         return out
-
 
     def compute_output_shape(self, input_shape):
         shape = tf.TensorShape(input_shape).as_list()
@@ -727,7 +707,6 @@ class NoiseLayer(Layer):
 
         """
 
-
         # define a systematic error unitary
         if self.noisedesc["systematic"]:
             # set random seed if supplied
@@ -739,7 +718,6 @@ class NoiseLayer(Layer):
             
             # convert to tensorflow compatible object
             self.systematic = tf.convert_to_tensor(Unoise, dtype=tf.complex64)
-
 
         # call build method of super class
         super(NoiseLayer, self).build(input_shape)
@@ -787,7 +765,7 @@ class NoiseLayer(Layer):
         output = tf.einsum('bil,lj->bij', leftm,
                            tf.linalg.adjoint(self.unitary), name="Einsum_right")
 
-        # # return probabalistic output
+        # # return probabilistic output
         # out = tf.math.scalar_mul(1-self.u_prob, inputs) + \
         #     tf.math.scalar_mul(self.u_prob, rightm)
 
@@ -810,7 +788,6 @@ class NoiseLayer(Layer):
     @property
     def output_size(self):
         return [self.output_dim, self.output_dim]
-
 
 
 class NonLinearLayer(Layer):
@@ -1009,8 +986,7 @@ class InvertLayer(Layer):
 
             # concatenate output vectors and return
             return tf.concat([v1, v2], axis=-1)
-            #return self.layer_apply(inputs, self.skernel)
-
+            # return self.layer_apply(inputs, self.skernel)
 
     def compute_output_shape(self, input_shape):
         shape = tf.TensorShape(input_shape).as_list()
@@ -1030,6 +1006,7 @@ class InvertLayer(Layer):
     @property
     def output_size(self):
         return [self.output_dim, self.output_dim]
+
 
 class RevDense(Layer):
     """Just your regular densely-connected NN layer.

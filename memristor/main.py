@@ -75,7 +75,7 @@ init = RandomUniform(minval=-1, maxval=1, seed=None)
 # Section 2: Apply resevoir compute layer to quantum data encoding 
 # ------------------------------------------------------------
 
-if task is "witness":
+if task == "witness":
 	# generate random entangled and seperable states
 	data_train, y_train, data_test, y_test = entanglement_gen(dim=10, num=5000, partition=0.5, embed_dim=dim)
 
@@ -122,27 +122,18 @@ else:
 		#data_train = eigen_encode_map(data_train, modes, photons)
 		#data_test = eigen_encode_map(data_test, modes, photons)
 
-		# pass through resevoir
+		# pass through reservoir
 		data_train = reservoir_map(data_train, modes, photons, pdesc, targets, temporal_num)
 		data_test = reservoir_map(data_test, modes, photons, pdesc, targets, temporal_num)
 
 		# save this mapped data so we don't have to recompute
 		if save:
-			np.savez(file_name, data_train=data_train, 
-								data_test=data_test, 
-								y_train=y_train, 
-								y_test=y_test)
-
+			np.savez(file_name, data_train=data_train, data_test=data_test, y_train=y_train, y_test=y_test)
 
 	data_train = data_train[:1000]
 	data_test = data_test[:1000]
 	y_train = y_train[:1000]
 	y_test = y_test[:1000]
-
-
-
-
-
 
 
 # ------------------------------------------------------------
@@ -153,26 +144,25 @@ else:
 input_state = Input(batch_shape=[None, dim, dim], dtype=tf.complex64, name="state_input")
 
 
-# extract classical output state of resevoir
-#output = ULayer(modes, photons, force=True)(input_state)
+# extract classical output state of reservoir
+# output = ULayer(modes, photons, force=True)(input_state)
 output = MeasureLayer(modes, photons, force=True)(input_state)
 # feed this into a small feedforward network
 
 output = Dense(units=20)(output)
-#output = ReLU(negative_slope=0.1, threshold=0.0)(output)
+# output = ReLU(negative_slope=0.1, threshold=0.0)(output)
 output = Dense(units=20)(output)
-#output = ReLU(negative_slope=0.01, threshold=0.0)(output)
+# output = ReLU(negative_slope=0.01, threshold=0.0)(output)
 output = Dense(units=3, activation="softmax",  use_bias=True)(output)
 
 # define standard optimiser
 opt = optimizers.Adam(lr=init_lr)
 
 # define loss function
-loss = tf.keras.losses.CategoricalCrossentropy(
-				    from_logits=True,
-				    label_smoothing=0,
-				    reduction="auto",
-				    name="categorical_crossentropy")
+loss = tf.keras.losses.CategoricalCrossentropy(from_logits=True,
+											   label_smoothing=0,
+											   reduction="auto",
+											   name="categorical_crossentropy")
 
 # define the model
 model = Model(inputs=input_state, output=output, name="Optical_Resevoir_Compute_Network")
