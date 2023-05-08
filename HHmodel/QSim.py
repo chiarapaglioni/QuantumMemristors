@@ -13,44 +13,41 @@ if __name__ == "__main__":
     ts = np.arange(0, tmax, eps)
     Zk = np.zeros(len(ts))
     ZNa = np.zeros(len(ts))
-
-    # First set of parameters
-    # Cc=10.0**(-3)
-    # Cg=10.0**(-3)
-    # Cr=10.0**(-3)
-    # w=10.0
-    # I0=0.35
-    # ZL=6000.0
-    # Zout=55.0
-    # n0=0.4
-    # m0=0.1
-    # h0=0.6
-    # Zk[0] = 2000.0
-    # ZNa[0] = 30000.0
        
     # Spike try parameters
     Cc = 10**(-6)
     Cg = 10**(-6)
     Cr = 10**(-6)
-    # w=10**1
-    # I0=1
+
+    # Impedance of the outgoing transmission line
     Zout = 50
+
+    # Activation variable values
     n0 = 0.4
     m0 = 0.6
     h0 = 0.2
-    ZL = 1 / (3*10**(-4))
-    Zk[0] = 1 / (1.33*(n0**4))
-    ZNa[0] = 1 / (0.17*(m0**3)*h0)
 
+    # Equations that allow update of the system
+    # Chloride channel = constant = 1 / GCl
+    ZL = 1 / (3 * 10**(-4))
+    Zk[0] = 1 / (1.33 * (n0**4))
+    ZNa[0] = 1 / (0.17 * (m0**3) * h0)
+
+    # w=10**1
+    # I0=1
     w = np.full((len(ts)), 10)
     I0 = np.full((len(ts)), 1)
     I0[:int(len(ts)/4)] = 0
     w[:int(len(ts)/4)] = 0
+
+    # Input current of the system
     I = np.multiply(I0, np.sin(np.multiply(w, ts)))
-    
+
+    # Voltage
     Vm = np.zeros(len(ts))
     Vm[0] = qhh.V(Zk[0], ZNa[0], ZL, Zout, I0[0], w[0], ts[0], Cc, Cr)
-          
+
+    # Update of the system
     for i in range(len(ts)-1):
         t = ts[i]
 
@@ -65,10 +62,12 @@ if __name__ == "__main__":
 
         k4 = qhh.k(t+eps, eps, Zk[i]+k3, ZNa[i]+q3, ZL, Zout, I0[i], w[i], Cc, Cr, n0)
         q4 = qhh.q(t+eps, eps, Zk[i]+k3, ZNa[i]+q3, ZL, Zout, I0[i], w[i], Cc, Cr, m0, h0)
-        
-        Zk[i+1] = Zk[i] + (1/6)*(k1+2*k2+2*k3+k4)
-        ZNa[i+1] = ZNa[i] + (1/6)*(q1+2*q2+2*q3+q4)
-        
+
+        # Update voltage of the potassium and sodium channels
+        Zk[i+1] = Zk[i] + (1/6)*(k1 + 2*k2 + 2*k3 + k4)
+        ZNa[i+1] = ZNa[i] + (1/6)*(q1 + 2*q2 + 2*q3 + q4)
+
+        # Update voltage of the system
         Vm[i+1] = qhh.V(Zk[i+1], ZNa[i+1], ZL, Zout, I0[i], w[i], ts[i+1], Cc, Cr)
         
     Gk = 1.0 / Zk 
@@ -76,19 +75,19 @@ if __name__ == "__main__":
     
     plt.subplot(2, 2, 1)
     plt.plot(ts, I, 'b')
-    plt.title("I")
+    plt.title("Input Current")
     
     plt.subplot(2, 2, 2)
     plt.plot(ts, Vm, 'r')
-    plt.title("V")
+    plt.title("Voltage")
     
     plt.subplot(2, 2, 3)
     plt.plot(ts, Gk, 'g')
-    plt.title("Gk")
+    plt.title("Potassium Conductance Gk")
     
     plt.subplot(2, 2, 4)
     plt.plot(ts, GNa, 'y')
-    plt.title("GNa")
+    plt.title("Sodium Conductance GNa")
     
     plt.tight_layout()
     plt.show()

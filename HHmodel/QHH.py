@@ -52,20 +52,25 @@ class QHH:
             beta_h = self.beta_h(V)
         return alpha_h/(alpha_h+beta_h) - ((alpha_h/(alpha_h+beta_h))-h0)*np.exp(-(alpha_h+beta_h)*t)
 
+    # Voltage of the system
     def V(self, Zk, ZNa, ZL, Zout, I0, w, t, Cc, Cr):
         Z = self.Z(Zk, ZNa, ZL)
         T = self.T(Zk, ZNa, ZL)
         f = Z*T*I0*(-w*Z*T*(Cc+Cr+Cc*(Cr**2.0)*(w**2.0)*(Zout**2.0))*np.cos(w*t)+(1.0+(Cr**2.0)*(w**2.0)*Zout*(Z*T+Zout))*np.sin(w*t))/(1.0+(w**2.0)*((((Cc+Cr)*Z*T)**2.0)+2.0*(Cr**2.0)*Z*T*Zout+((Cr*Zout)**2.0)*(1.0+((Cc*w*Z*T)**2.0))))
         return f
 
+    # Update of the system
+    # Formula of Zk
     def k(self, t, eps, Zk, ZNa, ZL, Zout, I0, w, Cc, Cr, n0):
         V = self.V(Zk, ZNa, ZL, Zout, I0, w, t, Cc, Cr)
         alpha_n = self.alpha_n(V)
         beta_n = self.beta_n(V)
         n = self.n(V, n0, t, alpha_n, beta_n)
-        f = eps*(-4*Zk*(alpha_n / n - (alpha_n + beta_n)))
+        f = eps*(-4*Zk * (alpha_n / n - (alpha_n + beta_n)))
         return f
 
+    # Update of the system
+    # Formula of ZNa
     def q(self, t, eps, Zk, ZNa, ZL, Zout, I0, w, Cc, Cr, m0, h0):
         V = self.V(Zk, ZNa, ZL, Zout, I0, w, t, Cc, Cr)
         alpha_m = self.alpha_m(V)
@@ -76,6 +81,6 @@ class QHH:
         beta_h = self.beta_h(V)
         h = self.h(V, h0, t, alpha_h, beta_h)
 
-        f = eps*(-ZNa*(3*((alpha_m / m) - (alpha_m + beta_m)) + (alpha_h / h) - (alpha_h + beta_h)))
+        f = eps*(-ZNa * (3*((alpha_m / m) - (alpha_m + beta_m)) + (alpha_h / h) - (alpha_h + beta_h)))
         return f
     

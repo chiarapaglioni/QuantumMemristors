@@ -60,9 +60,9 @@ class HHModel:
 
     def simple_ext_I(self, t):
         """ A constant injected current of 20 uA starting at 10% of time and ending at 90% of time """
-        if (t < 0.1*self.total_time):
+        if t < 0.1*self.total_time:
             return 0
-        elif (t < 0.9*self.total_time):
+        elif t < 0.9*self.total_time:
             return 20
         else:
             return 0
@@ -71,7 +71,10 @@ class HHModel:
         """ The differential equations governing the membrane potential """
         V_m, n, m, h = y0
 
+        # dVdt = I(t) = Input Current
         dVdt = (self.I_in(t) - (self.I_K(V_m, n) + self.I_Na(V_m, m, h) + self.I_L(V_m))) / self.C_m
+
+        # Derivatives:
         dndt = self.alpha_n(V_m) * (1 - n) - self.beta_n(V_m) * n
         dmdt = self.alpha_m(V_m) * (1 - m) - self.beta_m(V_m) * m
         dhdt = self.alpha_h(V_m) * (1 - h) - self.beta_h(V_m) * h
@@ -85,14 +88,14 @@ class HHModel:
         param I_in: a function of time for the injected current, if None uses constant current function simple_ext_I()
         """
 
-        if (isinstance(t, (int, float))):
+        if isinstance(t, (int, float)):
             self.total_time = t
             self.t_points = np.arange(0, t, self.dt)
         else:
             self.total_time = round(t[np.size(t)-1])
             self.t_points = t
 
-        if (I_in == None):
+        if I_in == None:
             self.I_in = self.simple_ext_I
         else:
             self.I_in = I_in
