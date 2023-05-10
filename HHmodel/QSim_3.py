@@ -1,4 +1,4 @@
-from QHH import QHH
+from QHH_3 import QHH_3
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
     Simulation of Quantized three-ion-channel Hodgkin-Huxley model
 """
 if __name__ == "__main__":
-    qhh = QHH()
+    qhh = QHH_3()
     
     eps = 0.0001
     tmax = 10
@@ -20,6 +20,7 @@ if __name__ == "__main__":
     Cr = 10**(-6)
 
     # Impedance of the outgoing transmission line
+    # Zout = Z1
     Zout = 50
 
     # Activation variable values
@@ -27,10 +28,15 @@ if __name__ == "__main__":
     m0 = 0.6
     h0 = 0.2
 
-    # Equations that allow update of the system
+    # Initial update of the system
     # Chloride channel = constant = 1 / GCl
+    # GCl = 3 * 10^-4
     ZL = 1 / (3 * 10**(-4))
+    # Chloride channel = constant = 1 / GK
+    # GK = max potassium conductance * m0^4
     Zk[0] = 1 / (1.33 * (n0**4))
+    # Chloride channel = constant = 1 / GNa
+    # GNa = max sodium conductance * m0^3 * h0
     ZNa[0] = 1 / (0.17 * (m0**3) * h0)
 
     # w=10**1
@@ -48,6 +54,7 @@ if __name__ == "__main__":
     Vm[0] = qhh.V(Zk[0], ZNa[0], ZL, Zout, I0[0], w[0], ts[0], Cc, Cr)
 
     # Update of the system
+    # TODO: Change the implementation of the update to adapt it to the photonic memristor
     for i in range(len(ts)-1):
         t = ts[i]
 

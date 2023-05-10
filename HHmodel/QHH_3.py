@@ -1,20 +1,22 @@
 import numpy as np
 
 
-class QHH:
+class QHH_3:
     """
     Implementation of Quantized three-ion-channel Hodgkin-Huxley model
+    (Sodium (Na), Potassium (K) and Leakage channel are considered)
     """
 
     def __init__(self):
         pass
 
+    # Function used to compute theta
     def T(self, Zk, ZNa, ZL):
         T = np.sqrt(Zk*ZL + ZNa*ZL + Zk*ZNa) / (np.sqrt(Zk*ZL) + np.sqrt(ZNa*ZL) + np.sqrt(Zk*ZNa))
         return T
 
     def Z(self, Zk, ZNa, ZL):
-        return Zk*ZNa*ZL / (Zk*ZL+ZNa*ZL+Zk*ZNa)
+        return Zk*ZNa*ZL / (Zk*ZL + ZNa*ZL + Zk*ZNa)
 
     def alpha_n(self, V):
         return 0.01*(V+55) / (1-np.exp(-(V+55)/10))
@@ -83,4 +85,9 @@ class QHH:
 
         f = eps*(-ZNa * (3*((alpha_m / m) - (alpha_m + beta_m)) + (alpha_h / h) - (alpha_h + beta_h)))
         return f
+
+    # Update of the system
+    # TODO: implement update rule R from photonic quantum memristor
+    def r(self):
+        pass
     
