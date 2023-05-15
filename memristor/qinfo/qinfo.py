@@ -4,11 +4,12 @@ A collection of useful functions for problems in quantum information theory.
 """
 
 import numpy as np
-from scipy.linalg import sqrtm,block_diag
+from scipy.linalg import sqrtm, block_diag
 from itertools import product
 from memristor.qinfo.operators import op
 import tensorflow as tf
 import cvxpy
+
 
 # TODO: redo partial trace function to compute it for arbitrary dimensional subsystems
 
@@ -49,8 +50,6 @@ def CPTP(kraus, rho):
         If no measurement transform has been specified.
     """
 
-
-
     nrho = np.zeros(rho.shape, dtype='complex128')
     for i in kraus:
         nrho += np.dot(i, np.dot(rho, i.conj()))
@@ -59,7 +58,6 @@ def CPTP(kraus, rho):
 
 # generates tensor products of arrayset according to combination
 def kronjob(arrayset, combination):
-
     """
     Class definition that handles signal reconstruction of a transformed input signal given
     the measurement basis. Able to perform standard compressed sensing and compressive 
@@ -94,8 +92,6 @@ def kronjob(arrayset, combination):
         If no measurement transform has been specified.
     """
 
-
-
     # initialise array
     matrix = 1
     # construct appropriate tensor product
@@ -123,17 +119,16 @@ def basis_gen(dim, basis="comp"):
     generates a set of orthonormal basis vectors for the input basis set and dimension
     """
 
-    if basis=="comp":
+    if basis == "comp":
         # slow, using zeroes is faster
         basis = np.eye(dim, dtype=np.complex128)
-    
+
     # TODO
     else:
         print("Unknown basis definition")
         pass
 
     return basis
-
 
 
 def partial_trace2(m, sys_trace, dims=None):
@@ -143,12 +138,12 @@ def partial_trace2(m, sys_trace, dims=None):
 
     # extract input state dimension
     sys_dim = np.shape(m)[0]
-    
+
     # default to uniform qubit case
     if dims is None:
         # compute number of subsystems in input
         sys_num = int(np.round(np.log2(sys_dim)))
-        dims = [2]*sys_num
+        dims = [2] * sys_num
     else:
         sys_num = len(dims)
 
@@ -162,29 +157,28 @@ def partial_trace2(m, sys_trace, dims=None):
         basis_dict[str(i)] = basis_gen(i)
 
     # compute dimension of output Hilbert spaces
-    output_dim = int(round(sys_dim/np.prod(np.asarray(dims)[sys_trace])))
+    output_dim = int(round(sys_dim / np.prod(np.asarray(dims)[sys_trace])))
 
     # preallocate output density operator
     output = np.zeros((output_dim, output_dim), dtype=np.complex128)
 
     # initialise projector counter    
-    proj_cnt = np.asarray([None]*sys_num)
+    proj_cnt = np.asarray([None] * sys_num)
     proj_cnt[sys_trace] = 0
-
 
     for i in range(0, np.prod(np.prod(np.asarray(dims)[sys_trace]))):
         # construct next projector
         proj = 1.0
-        for subsys,el in enumerate(proj_cnt):
+        for subsys, el in enumerate(proj_cnt):
             # get dimension of subsystem
             sys_dim = dims[subsys]
             # identity projection if subsystem is being kept
-            if el is None: 
+            if el is None:
                 proj = np.kron(proj, np.eye(sys_dim))
-            else: 
+            else:
 
                 # retrieve correct basis element
-                local_proj = basis_dict[str(sys_dim)][:,el].reshape(sys_dim,1)
+                local_proj = basis_dict[str(sys_dim)][:, el].reshape(sys_dim, 1)
                 proj = np.kron(proj, local_proj)
 
         # apply to subsystem and add to trace sum
@@ -192,15 +186,15 @@ def partial_trace2(m, sys_trace, dims=None):
 
         # update projector counter from lower to higher until incrementation occurs
         increment = False
-        for subsys,el in enumerate(proj_cnt):
+        for subsys, el in enumerate(proj_cnt):
             # skip subsystem if not being traced out
-            if el is None: 
+            if el is None:
                 continue
 
             # compute subsystem dimension
             sys_dim = dims[subsys]
             # increment index if less than total number and exit
-            if el+1 < sys_dim:
+            if el + 1 < sys_dim:
                 proj_cnt[subsys] += 1
                 increment = True
                 break
@@ -278,15 +272,8 @@ def partial_trace2(m, sys_trace, dims=None):
 #     return mtensor
 
 
-
-
-
-
-
-
 # generates an operator spanning set for any system with qnum qubits
 def opbasis(qnum):
-
     """
     Class definition that handles signal reconstruction of a transformed input signal given
     the measurement basis. Able to perform standard compressed sensing and compressive 
@@ -320,7 +307,6 @@ def opbasis(qnum):
     KeyError
         If no measurement transform has been specified.
     """
-
 
     # define operator basis set (Pauli set in this case)
     opset = np.asarray([op['id'],
@@ -340,8 +326,8 @@ def opbasis(qnum):
     # return operator basis
     return operbasis
 
-def meas_gen(N=1):
 
+def meas_gen(N=1):
     """
     Class definition that handles signal reconstruction of a transformed input signal given
     the measurement basis. Able to perform standard compressed sensing and compressive 
@@ -376,15 +362,14 @@ def meas_gen(N=1):
         If no measurement transform has been specified.
     """
 
-
     """
     generates a set of projective measurements for N qubits
     """
     # base projectors
-    projs_base = [np.kron(projs["0"],dagger(projs["0"])),
-                  np.kron(projs["1"],dagger(projs["1"]))]
+    projs_base = [np.kron(projs["0"], dagger(projs["0"])),
+                  np.kron(projs["1"], dagger(projs["1"]))]
 
-    if N==1:
+    if N == 1:
         return projs_base
     else:
         pass
@@ -397,12 +382,10 @@ def swap_gen(N, targets):
 
     # define a basis set with which to define operations
 
-    pass 
-
+    pass
 
 
 def bell_gen(N=2):
-
     """
     Class definition that handles signal reconstruction of a transformed input signal given
     the measurement basis. Able to perform standard compressed sensing and compressive 
@@ -436,24 +419,23 @@ def bell_gen(N=2):
     KeyError
         If no measurement transform has been specified.
     """
-
 
     """"
     Generate an N qubit Bell state |psi^+>
     """
 
-    bell = np.zeros((2**N,2**N), dtype=np.complex128)
+    bell = np.zeros((2 ** N, 2 ** N), dtype=np.complex128)
 
     # exploit structure rather than constructing a circuit
-    bell[0,0] = 0.5
-    bell[-1,0] = 0.5
-    bell[0,-1] = 0.5
-    bell[-1,-1] = 0.5
+    bell[0, 0] = 0.5
+    bell[-1, 0] = 0.5
+    bell[0, -1] = 0.5
+    bell[-1, -1] = 0.5
 
     return bell
 
-def rho_gen(N=1):
 
+def rho_gen(N=1):
     """
     Class definition that handles signal reconstruction of a transformed input signal given
     the measurement basis. Able to perform standard compressed sensing and compressive 
@@ -488,20 +470,19 @@ def rho_gen(N=1):
         If no measurement transform has been specified.
     """
 
-
     """
     Generates a spanning set of density matrices for N qubits
     """
-    dim = 2**N
+    dim = 2 ** N
 
     # initialise basis set
-    rhob = np.empty((dim**2, dim, dim), dtype=np.complex128)
+    rhob = np.empty((dim ** 2, dim, dim), dtype=np.complex128)
     # define component set
     rhobase = np.empty((4, 2, 2), dtype=np.complex128)
     rhobase[0, :, :] = np.asarray([[1, 0], [0, 0]])
     rhobase[1, :, :] = np.asarray([[0, 0], [0, 1]])
-    rhobase[2, :, :] = np.asarray([[1, 1], [1, 1]])/2
-    rhobase[3, :, :] = np.asarray([[1, -1j], [1j, 1]])/2
+    rhobase[2, :, :] = np.asarray([[1, 1], [1, 1]]) / 2
+    rhobase[3, :, :] = np.asarray([[1, -1j], [1j, 1]]) / 2
 
     # generate permutation list
     combs = product(['0', '1', '2', '3'], repeat=N)
@@ -515,7 +496,6 @@ def rho_gen(N=1):
 
 
 def dual_gen(rhob, N=1):
-
     """
     Class definition that handles signal reconstruction of a transformed input signal given
     the measurement basis. Able to perform standard compressed sensing and compressive 
@@ -549,7 +529,6 @@ def dual_gen(rhob, N=1):
     KeyError
         If no measurement transform has been specified.
     """
-
 
     """
     Computes the duals of an input basis <rhob>.
@@ -560,13 +539,13 @@ def dual_gen(rhob, N=1):
     # define pauli basis
     pauli = opbasis(N)
     # reshape pauli array
-    basis_flat = np.transpose(np.reshape(pauli, [dim**2]*2, order='C'))
+    basis_flat = np.transpose(np.reshape(pauli, [dim ** 2] * 2, order='C'))
     # initialise coefficent array
-    coeffs = np.empty((2**(2*N), 2**(2*N)), dtype=float)
+    coeffs = np.empty((2 ** (2 * N), 2 ** (2 * N)), dtype=float)
 
     # compute basis coefficients (will need to reformulate with pyconv + constraints)
-    for i in range(int(dim**2)):
-        rho = np.reshape(rhob[i, :, :], [dim**2, 1])
+    for i in range(int(dim ** 2)):
+        rho = np.reshape(rhob[i, :, :], [dim ** 2, 1])
 
         # could compute analytically but I want this to be generalisable
         coeffs[i, :] = np.real(np.squeeze(np.linalg.solve(basis_flat, rho)))
@@ -574,26 +553,25 @@ def dual_gen(rhob, N=1):
         # check that reconstructed matrices are within tolerance
         rhor = np.zeros(([dim, dim]), dtype=np.complex128)
 
-        for j in range(dim**2):
+        for j in range(dim ** 2):
             rhor += coeffs[i, j] * np.reshape(basis_flat[:, j], [dim, dim])
         assert np.allclose(rhor, np.reshape(rho, [
-                           dim, dim]), atol=1e-9), "Reconstructed array not within tolerance of target: Aborting"
+            dim, dim]), atol=1e-9), "Reconstructed array not within tolerance of target: Aborting"
 
     # find the inverse of the coefficient matrix
     F = np.conjugate(np.transpose((np.linalg.inv(coeffs))))
 
     # compute the duals to rhob
     duals = np.zeros_like(rhob)
-    for i in range(dim**2):
-        for j in range(dim**2):
-            duals[i, :, :] += 0.5*F[i, j] * \
-                np.reshape(basis_flat[:, j], [dim, dim])
-                
+    for i in range(dim ** 2):
+        for j in range(dim ** 2):
+            duals[i, :, :] += 0.5 * F[i, j] * \
+                              np.reshape(basis_flat[:, j], [dim, dim])
+
     return duals
 
 
 def dualp_tomography(dual, rhop, estimate=False):
-
     """
     Class definition that handles signal reconstruction of a transformed input signal given
     the measurement basis. Able to perform standard compressed sensing and compressive 
@@ -627,7 +605,6 @@ def dualp_tomography(dual, rhop, estimate=False):
     KeyError
         If no measurement transform has been specified.
     """
-
 
     """
     Perform process tomography using the dual approach and outputs the Choi state of the process
@@ -639,28 +616,28 @@ def dualp_tomography(dual, rhop, estimate=False):
     dim = np.shape(rhop)[-1]
 
     # initialise Aform and Bform
-    Aform = np.zeros((dim**2, dim**2), dtype=np.complex128)
-    Bform = np.zeros((dim**2, dim**2), dtype=np.complex128)
+    Aform = np.zeros((dim ** 2, dim ** 2), dtype=np.complex128)
+    Bform = np.zeros((dim ** 2, dim ** 2), dtype=np.complex128)
 
     # compute A form in terms of the duals
-    for i in range(dim**2):
+    for i in range(dim ** 2):
         Aform += np.outer(rhop[i, :, :], np.conjugate(dual[i, :, :]))
 
     # compute B form in terms of the duals
-    for j in range(dim**2):
+    for j in range(dim ** 2):
         Bform += np.kron(rhop[j, :, :], np.conjugate(dual[j, :, :]))
 
     # force valid CP map
     if estimate:
         # setup estimate problem
-        choi = cvxpy.Variable((dim**2,dim**2), hermitian=True)
+        choi = cvxpy.Variable((dim ** 2, dim ** 2), hermitian=True)
         psd_constraint = choi >> 0
         partial_constraint1 = partial_trace2(choi, [0]) == np.eye(dim)
         partial_constraint2 = partial_trace2(choi, [1]) == np.eye(dim)
         trace_constraint = cvxpy.trace(choi) == dim
         constraints = [psd_constraint, trace_constraint, partial_constraint1, partial_constraint2]
 
-        prob = cvxpy.Problem(cvxpy.Minimize(cvxpy.norm(choi - Bform,2)), constraints)
+        prob = cvxpy.Problem(cvxpy.Minimize(cvxpy.norm(choi - Bform, 2)), constraints)
 
         # minimise trace distance between channels 
         prob.solve()
@@ -674,7 +651,6 @@ def dualp_tomography(dual, rhop, estimate=False):
 
 
 def IA_gen(N):
-
     """
     Class definition that handles signal reconstruction of a transformed input signal given
     the measurement basis. Able to perform standard compressed sensing and compressive 
@@ -709,7 +685,6 @@ def IA_gen(N):
         If no measurement transform has been specified.
     """
 
-
     """
     Computes the A/B--form of the identity channel
     """
@@ -719,6 +694,7 @@ def IA_gen(N):
     duals = dual_gen(rhop, N=N)
     A, B = dualp_tomography(duals, rhop)
     return A, B
+
 
 def B_apply(choi, rho):
     """
@@ -731,7 +707,6 @@ def B_apply(choi, rho):
 
 
 def UA_gen(U):
-
     """
     Class definition that handles signal reconstruction of a transformed input signal given
     the measurement basis. Able to perform standard compressed sensing and compressive 
@@ -787,7 +762,6 @@ def UA_gen(U):
 
 
 def AB_join(A1, A2):
-
     """
     Class definition that handles signal reconstruction of a transformed input signal given
     the measurement basis. Able to perform standard compressed sensing and compressive 
@@ -838,13 +812,12 @@ def AB_join(A1, A2):
     A2_sdim = int(round(np.sqrt(A2_dim)))
 
     # construct subsystem remap
-    cshape = [A1_sdim, A1_sdim, A2_sdim, A2_sdim]*2
+    cshape = [A1_sdim, A1_sdim, A2_sdim, A2_sdim] * 2
 
     return np.reshape(np.transpose(np.reshape(joint, cshape), [0, 2, 1, 3, 4, 6, 5, 7]), [dim, dim])
 
 
 def log_base(a, base=np.e):
-
     """
     Class definition that handles signal reconstruction of a transformed input signal given
     the measurement basis. Able to perform standard compressed sensing and compressive 
@@ -878,16 +851,14 @@ def log_base(a, base=np.e):
     KeyError
         If no measurement transform has been specified.
     """
-
 
     """
     Computes the log of a to given base
     """
-    return np.log(a)/np.log(base)
+    return np.log(a) / np.log(base)
 
 
 def subsystem_num(M, dim=2):
-
     """
     Class definition that handles signal reconstruction of a transformed input signal given
     the measurement basis. Able to perform standard compressed sensing and compressive 
@@ -921,7 +892,6 @@ def subsystem_num(M, dim=2):
     KeyError
         If no measurement transform has been specified.
     """
-
 
     """
     Given a square matrix M and subsystem dimension dim, computes the number
@@ -932,7 +902,6 @@ def subsystem_num(M, dim=2):
 
 
 def tracenorm(m):
-
     """
     Class definition that handles signal reconstruction of a transformed input signal given
     the measurement basis. Able to perform standard compressed sensing and compressive 
@@ -972,7 +941,6 @@ def tracenorm(m):
 
 
 def AB_shuffle(form):
-
     """
     Class definition that handles signal reconstruction of a transformed input signal given
     the measurement basis. Able to perform standard compressed sensing and compressive 
@@ -1006,7 +974,6 @@ def AB_shuffle(form):
     KeyError
         If no measurement transform has been specified.
     """
-
 
     """
     Switches between the A/B form of a map. Assumes same input/output dimensions.
@@ -1016,11 +983,10 @@ def AB_shuffle(form):
     # get subsystem dimension
     sub_dim = int(round(np.sqrt(dim)))
     # reshape subsystems into 4-tensor
-    return np.reshape(np.transpose(np.reshape(form, [sub_dim]*4), (0, 2, 1, 3)), (dim, dim))
+    return np.reshape(np.transpose(np.reshape(form, [sub_dim] * 4), (0, 2, 1, 3)), (dim, dim))
 
 
 def random_U(dim, num=1):
-
     """
     Class definition that handles signal reconstruction of a transformed input signal given
     the measurement basis. Able to perform standard compressed sensing and compressive 
@@ -1054,31 +1020,29 @@ def random_U(dim, num=1):
     KeyError
         If no measurement transform has been specified.
     """
-
 
     """
     Generate num random unitaries on N qubits using standard sampling strategy
     """
     # preallocate U array
-    Us = np.zeros((num, dim,dim), dtype=np.complex128)
+    Us = np.zeros((num, dim, dim), dtype=np.complex128)
 
     # generate unitaries using naive method
-    for i in range(0,num):
+    for i in range(0, num):
         # generate a random complex matrix (yes I know I could do this in one go rather than iterate)
-        U = np.random.rand(dim,dim) + 1j*np.random.rand(dim,dim) 
+        U = np.random.rand(dim, dim) + 1j * np.random.rand(dim, dim)
 
         # QR factorisation
-        [Q,R] = np.linalg.qr(U/np.sqrt(2))
-        R = np.diag(np.diag(R)/np.abs(np.diag(R)))
-        
+        [Q, R] = np.linalg.qr(U / np.sqrt(2))
+        R = np.diag(np.diag(R) / np.abs(np.diag(R)))
+
         # compute the unitary
-        Us[i,:,:] = Q @ R
+        Us[i, :, :] = Q @ R
 
     return Us
 
 
 def random_O(dim, num=1):
-
     """
     Class definition that handles signal reconstruction of a transformed input signal given
     the measurement basis. Able to perform standard compressed sensing and compressive 
@@ -1112,7 +1076,6 @@ def random_O(dim, num=1):
     KeyError
         If no measurement transform has been specified.
     """
-
 
     """
     Generate num random unitaries on N qubits using standard sampling strategy
@@ -1121,14 +1084,14 @@ def random_O(dim, num=1):
     Us = np.zeros((num, dim, dim))
 
     # generate unitaries using naive method
-    for i in range(0,num):
+    for i in range(0, num):
         # generate a random complex matrix (yes I know I could do this in one go rather than iterate)
         U = np.random.rand(dim, dim)
 
         # QR factorisation
-        [Q, R] = np.linalg.qr(U/np.sqrt(2))
-        R = np.diag(np.diag(R)/np.abs(np.diag(R)))
-        
+        [Q, R] = np.linalg.qr(U / np.sqrt(2))
+        R = np.diag(np.diag(R) / np.abs(np.diag(R)))
+
         # compute the unitary
         Us[i, :, :] = Q @ R
 
@@ -1136,7 +1099,6 @@ def random_O(dim, num=1):
 
 
 def haar_sample(dim=2, num=10, pure=True):
-
     """
     Class definition that handles signal reconstruction of a transformed input signal given
     the measurement basis. Able to perform standard compressed sensing and compressive 
@@ -1171,13 +1133,12 @@ def haar_sample(dim=2, num=10, pure=True):
         If no measurement transform has been specified.
     """
 
-
     """
     Generates <num> quantum states of dimension 2**N from Haar distribution.
     """
     # generate random complex arrays
     states = np.random.uniform(low=-1, high=1, size=(num, dim, dim)) + \
-        np.random.uniform(low=-1, high=1, size=(num, dim, dim))*1j
+             np.random.uniform(low=-1, high=1, size=(num, dim, dim)) * 1j
     for i in range(num):
         # compute Hilbert Schmidt norm
         A2 = np.sqrt(np.trace(dagger(states[i, :, :]) @ states[i, :, :]))
@@ -1188,15 +1149,14 @@ def haar_sample(dim=2, num=10, pure=True):
 
         if pure:
             # TODO: did the ordering from eigh change at some point?
-            _,state = np.linalg.eigh(states[i,:,:])
-            state = np.asarray(state[:,-1]).reshape(dim,1)
+            _, state = np.linalg.eigh(states[i, :, :])
+            state = np.asarray(state[:, -1]).reshape(dim, 1)
             states[i, :, :] = np.kron(dagger(state), state)
 
     return states
 
 
 def rhoplot(rho, axislabels=None, save=False):
-
     """
     Class definition that handles signal reconstruction of a transformed input signal given
     the measurement basis. Able to perform standard compressed sensing and compressive 
@@ -1230,7 +1190,6 @@ def rhoplot(rho, axislabels=None, save=False):
     KeyError
         If no measurement transform has been specified.
     """
-
 
     import matplotlib.pyplot as plt
     import matplotlib.colors as colors
@@ -1244,7 +1203,7 @@ def rhoplot(rho, axislabels=None, save=False):
     # instantiate new figure
     fig = plt.gcf()
     fig.canvas.set_window_title('Density Plot')
-    #rax = Axes3D(fig)
+    # rax = Axes3D(fig)
     rax = fig.add_subplot(121, projection='3d')
     iax = fig.add_subplot(122, projection='3d')
 
@@ -1267,7 +1226,7 @@ def rhoplot(rho, axislabels=None, save=False):
     z = np.zeros_like(x)
 
     # create bar widths
-    dx = 0.5*np.ones_like(z)
+    dx = 0.5 * np.ones_like(z)
     dy = dx.copy()
     dzr = realrho.flatten()
     dzi = imagrho.flatten()
@@ -1275,8 +1234,8 @@ def rhoplot(rho, axislabels=None, save=False):
     # compute colour matrix for real matrix and set axes bounds
     norm = colors.Normalize(dzr.min(), dzr.max())
     rcolours = cm.BuGn(norm(dzr))
-    rax.set_zlim3d([dzr.min(), 1.5*np.max(dzr)])
-    iax.set_zlim3d([dzi.min(), 1.5*np.max(dzr)])
+    rax.set_zlim3d([dzr.min(), 1.5 * np.max(dzr)])
+    iax.set_zlim3d([dzi.min(), 1.5 * np.max(dzr)])
 
     inorm = colors.Normalize(dzi.min(), dzi.max())
     icolours = cm.jet(inorm(dzi))
@@ -1284,12 +1243,11 @@ def rhoplot(rho, axislabels=None, save=False):
     # plot image
     rax.bar3d(x, y, z, dx, dy, dzr, color=rcolours)
     iax.bar3d(x, y, z, dx, dy, dzi, color=icolours)
-    #plt.ticklabel_format(style='sci', axis='z', scilimits=(0, 0))
+    # plt.ticklabel_format(style='sci', axis='z', scilimits=(0, 0))
     plt.show()
 
 
 def vecstate(state):
-
     """
     Class definition that handles signal reconstruction of a transformed input signal given
     the measurement basis. Able to perform standard compressed sensing and compressive 
@@ -1323,7 +1281,6 @@ def vecstate(state):
     KeyError
         If no measurement transform has been specified.
     """
-
 
     """
     Vectorises state using the computational basis or devectorises.
@@ -1332,14 +1289,13 @@ def vecstate(state):
     dim = np.shape(state)[0]
 
     if dim == np.shape(state)[1]:
-        return np.reshape(state, [dim**2, 1])
+        return np.reshape(state, [dim ** 2, 1])
     else:
         sdim = int(round(np.sqrt(dim)))
         return np.reshape(state, [sdim, sdim])
 
 
 def subsyspermute(rho, perm, dims):
-
     """
     Class definition that handles signal reconstruction of a transformed input signal given
     the measurement basis. Able to perform standard compressed sensing and compressive 
@@ -1373,7 +1329,6 @@ def subsyspermute(rho, perm, dims):
     KeyError
         If no measurement transform has been specified.
     """
-
 
     # get dimensions of system
     d = np.shape(rho)
@@ -1382,11 +1337,10 @@ def subsyspermute(rho, perm, dims):
     # perform permutation
     perm = [(sys - 1 - i) for i in perm[-1::-1]]
     perm = listflatten([perm, [sys + j for j in perm]])
-    return np.transpose(rho.reshape(dims[-1::-1]*2), perm).reshape(d)
+    return np.transpose(rho.reshape(dims[-1::-1] * 2), perm).reshape(d)
 
 
 def qre(rho, gamma):
-
     """
     Class definition that handles signal reconstruction of a transformed input signal given
     the measurement basis. Able to perform standard compressed sensing and compressive 
@@ -1420,7 +1374,6 @@ def qre(rho, gamma):
     KeyError
         If no measurement transform has been specified.
     """
-
 
     """
     computes the quantum relative entropy between two states rho and gamma
@@ -1463,15 +1416,13 @@ def kolmogorov(rho, gamma):
         If no measurement transform has been specified.
     """
 
-
     """
     Computes the trace or Kolmogorov distance between two quantum states
     """
-    return np.trace(abs(rho-gamma))/2
+    return np.trace(abs(rho - gamma)) / 2
 
 
 def qfid(rho, gamma):
-
     """
     Class definition that handles signal reconstruction of a transformed input signal given
     the measurement basis. Able to perform standard compressed sensing and compressive 
@@ -1505,17 +1456,15 @@ def qfid(rho, gamma):
     KeyError
         If no measurement transform has been specified.
     """
-
 
     """
     Computes the quantum fidelity between two quantum states (not a metric)
     """
     print(sqrtm(rho))
-    return (np.trace(sqrtm(sqrtm(rho)*gamma*sqrtm(rho))))**2
+    return (np.trace(sqrtm(sqrtm(rho) * gamma * sqrtm(rho)))) ** 2
 
 
-def bures(rho,gamma):
-
+def bures(rho, gamma):
     """
     Class definition that handles signal reconstruction of a transformed input signal given
     the measurement basis. Able to perform standard compressed sensing and compressive 
@@ -1549,16 +1498,14 @@ def bures(rho,gamma):
     KeyError
         If no measurement transform has been specified.
     """
-
 
     """
     Computes Bures angle between two states
     """
-    return np.arccos(np.clip(np.sqrt(np.trace(sqrtm(sqrtm(rho) @ gamma @ sqrtm(rho)))**2), 0.0,1.0))
+    return np.arccos(np.clip(np.sqrt(np.trace(sqrtm(sqrtm(rho) @ gamma @ sqrtm(rho))) ** 2), 0.0, 1.0))
 
 
 def helstrom(rho, gamma):
-
     """
     Class definition that handles signal reconstruction of a transformed input signal given
     the measurement basis. Able to perform standard compressed sensing and compressive 
@@ -1592,16 +1539,14 @@ def helstrom(rho, gamma):
     KeyError
         If no measurement transform has been specified.
     """
-
 
     """
     Computes the Helstrom distance between two quantum states
     """
-    return sqrtm(2*(1-sqrtm(qfid(rho, gamma))))
+    return sqrtm(2 * (1 - sqrtm(qfid(rho, gamma))))
 
 
 def isdensity(rho):
-
     """
     Class definition that handles signal reconstruction of a transformed input signal given
     the measurement basis. Able to perform standard compressed sensing and compressive 
@@ -1635,19 +1580,18 @@ def isdensity(rho):
     KeyError
         If no measurement transform has been specified.
     """
-
 
     """
     Checks if an input matrix is a valid density operator
     """
     res = True
     res &= np.all(np.isclose(rho - dagger(rho), 0.0))  # symmetric
-    res &= np.all(np.linalg.eigvals(rho) >= 0)         # positive semidefinite
-    res &= np.isclose(np.trace(rho), 1.0)              # trace one
+    res &= np.all(np.linalg.eigvals(rho) >= 0)  # positive semidefinite
+    res &= np.isclose(np.trace(rho), 1.0)  # trace one
     return res
 
-def eye_like(m):
 
+def eye_like(m):
     """
     Class definition that handles signal reconstruction of a transformed input signal given
     the measurement basis. Able to perform standard compressed sensing and compressive 
@@ -1681,7 +1625,6 @@ def eye_like(m):
     KeyError
         If no measurement transform has been specified.
     """
-
 
     """
     Returns identity matrix with same dims as square matrix m.
@@ -1691,7 +1634,6 @@ def eye_like(m):
 
 
 def mem_check(dims, type=np.float64):
-
     """
     Class definition that handles signal reconstruction of a transformed input signal given
     the measurement basis. Able to perform standard compressed sensing and compressive 
@@ -1725,16 +1667,14 @@ def mem_check(dims, type=np.float64):
     KeyError
         If no measurement transform has been specified.
     """
-
 
     """
     Returns the number of bits an array with dimensions <dims> and datatype <type> will require.
     """
-    return np.prod(dims)*np.finfo(type).bits
+    return np.prod(dims) * np.finfo(type).bits
 
 
 def povm_gen(N=1):
-
     """
     Class definition that handles signal reconstruction of a transformed input signal given
     the measurement basis. Able to perform standard compressed sensing and compressive 
@@ -1768,26 +1708,25 @@ def povm_gen(N=1):
     KeyError
         If no measurement transform has been specified.
     """
-
 
     """
     Generates a simple POVM for N qubits. Corresponds to a spanning set of the NxN Hermitian matrices.
     """
     # explicitly calculate for later modifcation to generalised subsystems
-    dim = 2**N
+    dim = 2 ** N
     # initialise set array
-    povm = np.empty((dim**2, dim, dim), dtype=np.complex128)
+    povm = np.empty((dim ** 2, dim, dim), dtype=np.complex128)
     # Set of N matrices with one 1 on the diagonal union with N(N−1)/2 [1,+i/-i] on off--diagonal.
     # define N=1 spanning set and build from there
     povmbase = np.empty((4, 2, 2), dtype=np.complex128)
-    alpha = (np.sqrt(3)*1j-1)/2
+    alpha = (np.sqrt(3) * 1j - 1) / 2
     alphac = np.conjugate(alpha)
-    povmbase[0, :, :] = np.asarray([[1, 0], [0, 0]])/2
-    povmbase[1, :, :] = np.asarray([[1, np.sqrt(2)], [np.sqrt(2), 2]])/6
+    povmbase[0, :, :] = np.asarray([[1, 0], [0, 0]]) / 2
+    povmbase[1, :, :] = np.asarray([[1, np.sqrt(2)], [np.sqrt(2), 2]]) / 6
     povmbase[2, :, :] = np.asarray(
-        [[1, np.sqrt(2)*alpha], [np.sqrt(2)*alphac, 2]])/6
+        [[1, np.sqrt(2) * alpha], [np.sqrt(2) * alphac, 2]]) / 6
     povmbase[3, :, :] = np.asarray(
-        [[1, np.sqrt(2)*alphac], [np.sqrt(2)*alpha, 2]])/6
+        [[1, np.sqrt(2) * alphac], [np.sqrt(2) * alpha, 2]]) / 6
 
     # since larger Hilbert spaces are simply chained tensor products, so too will the joint basis set 
     # be the tensor product of the constituent spaces.
@@ -1800,6 +1739,7 @@ def povm_gen(N=1):
 
         povm[i, :, :] = pvm
     return povm
+
 
 def randCP_gen(d):
     """
@@ -1823,15 +1763,10 @@ def randCP_gen(d):
         If dimension is non-integer or negative.
 
     """
-    assert d>1 and type(d) is int, "Dimension is either less than one or non-int"
+    assert d > 1 and type(d) is int, "Dimension is either less than one or non-int"
 
     # generate a single random density operator
     rho = np.squeeze(haar_sample(N=int(round(np.log2(d))), num=1))
-    
-    
-    
-
-
 
 
 def randpovm_gen(d, ):
@@ -1861,9 +1796,7 @@ def randpovm_gen(d, ):
     """
 
 
-
 class ControlSpan():
-
     """
     Class definition that handles signal reconstruction of a transformed input signal given
     the measurement basis. Able to perform standard compressed sensing and compressive 
@@ -1898,11 +1831,11 @@ class ControlSpan():
         If no measurement transform has been specified.
     """
 
-
     """
     Computes a spanning set of control operations (the space B(B(H_d)) with d=2**N). Assumes qubits for the moment.
     Must be done as an iterator else the memory requirements are simply too severe for even short processes. 
     """
+
     def __init__(self, N=1, k=1):
 
         # number of time steps in process
@@ -1914,27 +1847,25 @@ class ControlSpan():
         # compute POVM
         self.povm = povm_gen(N=N)
 
-
     def __iter__(self):
         """
         initialise control sequence number and loop constants
-        """ 
+        """
         self.cseq_num = 0
         # preallocate current control sequence
-        self.control_sequence = np.empty((self.k, 2**(2*self.N),2**(2*self.N)), dtype=np.complex128)
+        self.control_sequence = np.empty((self.k, 2 ** (2 * self.N), 2 ** (2 * self.N)), dtype=np.complex128)
         # current rho to iterate over
-        self.rho_num = [0]*self.k
+        self.rho_num = [0] * self.k
         # current povm to iterate over
-        self.povm_num = [0]*self.k
-        
-        return self
+        self.povm_num = [0] * self.k
 
+        return self
 
     def __next__(self):
         """
         Iteratively generate the control maps for a k--step process tensor
         """
-        
+
         # compute control sequence
         if self.rho_num[-1] < len(self.rhob):
 
@@ -1943,7 +1874,7 @@ class ControlSpan():
                 for i in range(0, self.k):
                     rho_sel = self.rho_num[i]
                     povm_sel = self.povm_num[i]
-                    self.control_sequence[i, :,:] = np.kron(self.rhob[rho_sel,:,:], self.povm[povm_sel,:,:])
+                    self.control_sequence[i, :, :] = np.kron(self.rhob[rho_sel, :, :], self.povm[povm_sel, :, :])
                     self.cseq_num += 1
                     return self.control_sequence
 
@@ -1952,14 +1883,14 @@ class ControlSpan():
             inc_ind = 0
             while inc_flag:
                 # check if incrementation overflows
-                if self.povm_num[inc_ind]+1>=len(self.povm):
+                if self.povm_num[inc_ind] + 1 >= len(self.povm):
                     inc_ind += 1
 
                     # check if rhob needs to be incremented
                     if inc_ind >= len(self.povm_num):
                         inc_ind = 0
                         while inc_flag:
-                            if self.rho_num[inc_ind]+1 >= len(self.rhob):
+                            if self.rho_num[inc_ind] + 1 >= len(self.rhob):
                                 inc_ind += 1
                                 # exit if we have are at the end of the final iter
                                 if inc_ind == len(self.rho_num):
@@ -1967,20 +1898,20 @@ class ControlSpan():
 
                             else:
                                 self.rho_num[inc_ind] += 1
-                                self.rho_num[:inc_ind] = [0]*inc_ind
-                                self.povm_num = [0]*len(self.povm_num)
+                                self.rho_num[:inc_ind] = [0] * inc_ind
+                                self.povm_num = [0] * len(self.povm_num)
                                 inc_flag = False
 
                 else:
                     self.povm_num[inc_ind] += 1
-                    self.povm_num[:inc_ind] = [0]*inc_ind
+                    self.povm_num[:inc_ind] = [0] * inc_ind
                     inc_flag = False
 
             # iterate over number of time steps
             for i in range(0, self.k):
                 rho_sel = self.rho_num[i]
                 povm_sel = self.povm_num[i]
-                self.control_sequence[i, :,:] = np.kron(self.rhob[rho_sel,:,:], self.povm[povm_sel,:,:])
+                self.control_sequence[i, :, :] = np.kron(self.rhob[rho_sel, :, :], self.povm[povm_sel, :, :])
 
             # iterate loop couinter
             self.cseq_num += 1
@@ -1991,7 +1922,6 @@ class ControlSpan():
 
 
 def Universal_U():
-
     """
     Class definition that handles signal reconstruction of a transformed input signal given
     the measurement basis. Able to perform standard compressed sensing and compressive 
@@ -2025,39 +1955,37 @@ def Universal_U():
     KeyError
         If no measurement transform has been specified.
     """
-
 
     """
     Generates an interesting unitary drawing from the universal gate set
     """
 
     # base unitary
-    U = np.eye(2**5)
+    U = np.eye(2 ** 5)
 
     # hadamard combo to get started
-    H = np.kron(kronjob([ops['h']],[0,0]), np.eye(8))
+    H = np.kron(kronjob([ops['h']], [0, 0]), np.eye(8))
     U = H @ U
 
     # controlled nots
-    U = kronjob([ops['cx'], ops['id']], [0,0,1]) @ U
+    U = kronjob([ops['cx'], ops['id']], [0, 0, 1]) @ U
 
     # some local operators
-    U = kronjob([ops['id'],ops['t'],ops['s']],[2,1,2,0,0]) @ U
+    U = kronjob([ops['id'], ops['t'], ops['s']], [2, 1, 2, 0, 0]) @ U
 
     # some more controlled nots
-    U = kronjob([ops['cx'], ops['id']], [1,0,1,1]) @ U
+    U = kronjob([ops['cx'], ops['id']], [1, 0, 1, 1]) @ U
 
     # hit some phase gates
-    U = kronjob([ops['s'], ops['id']], [1,1,0,1,1]) @ U
+    U = kronjob([ops['s'], ops['id']], [1, 1, 0, 1, 1]) @ U
 
     # finally some T gate action
-    U = kronjob([ops['id'], ops['t'], ops['s']],[1,1,1,2,0])
+    U = kronjob([ops['id'], ops['t'], ops['s']], [1, 1, 1, 2, 0])
 
     return U
 
 
 class ProcessTensor():
-
     """
     Class definition that handles signal reconstruction of a transformed input signal given
     the measurement basis. Able to perform standard compressed sensing and compressive 
@@ -2091,7 +2019,6 @@ class ProcessTensor():
     KeyError
         If no measurement transform has been specified.
     """
-
 
     """
     Class that defines the process tensor given specified simulation parameters. Assumes qubits for now. 
@@ -2115,7 +2042,7 @@ class ProcessTensor():
         self.sq = int(np.round(np.log2(self.sd)))
         self.eq = int(np.round(np.log2(len(self.rho_se)))) - self.sq
         # dimension of environmental subsystem (assumes qubits)
-        self.ed = 2**self.eq
+        self.ed = 2 ** self.eq
 
         # check input parameters are valid
         assert np.shape(self.U)[0] == np.shape(self.U)[1] and len(np.shape(
@@ -2133,12 +2060,15 @@ class ProcessTensor():
 
         # check if process tensor will be too large (not needed for now)
         if self.k > 5 and not self.force:
-            raise ValueError("a {} step process is very large, set force parameter to True to compute this process tenor".format(self.k))
+            raise ValueError(
+                "a {} step process is very large, set force parameter to True to compute this process tenor".format(
+                    self.k))
 
         # TODO: yikes
         # assert that the length of the controls is less than the time length of the process tensor
         try:
-            assert np.shape(A)[2] == self.k, "Number of control operations does not equal k length of process tensor: {} != {}".format(
+            assert np.shape(A)[
+                       2] == self.k, "Number of control operations does not equal k length of process tensor: {} != {}".format(
                 self.k, np.shape(A)[2])
 
         except AssertionError as e:
@@ -2194,11 +2124,9 @@ class ProcessTensor():
         controls = ControlSpan(N=self.sq, k=self.k)
 
         # preallocate process tensor array
-        ptensor = np.zeros((),dtype=np.complex128)
+        ptensor = np.zeros((), dtype=np.complex128)
 
-        
-
-    def pt_compute(self): 
+    def pt_compute(self):
         """
         Directly compute the process tensor, sidestepping any tomography calculations. A very unpleasant function 
         to write, due solely to the subsystem operations that need to be performed. 
@@ -2211,8 +2139,8 @@ class ProcessTensor():
         """
         pass
 
-def is_choi(A, tol=1e-6):
 
+def is_choi(A, tol=1e-6):
     """
     Class definition that handles signal reconstruction of a transformed input signal given
     the measurement basis. Able to perform standard compressed sensing and compressive 
@@ -2247,7 +2175,6 @@ def is_choi(A, tol=1e-6):
         If no measurement transform has been specified.
     """
 
-
     """ 
     Check if an input map is a valid Choi matrix/state. Ignores normalisation. 
     """
@@ -2255,7 +2182,7 @@ def is_choi(A, tol=1e-6):
     # check shape
     if len(np.shape(A)) != 2 or np.shape(A)[0] != np.shape(A)[1]:
         Q = False
-    
+
     # compute eigenvalues
     eigen_vals = np.linalg.eigvals(A)
 
@@ -2266,9 +2193,7 @@ def is_choi(A, tol=1e-6):
     # ensure positive semidefinitess
 
 
-
 def is_deterministic(A, tol=1e-6):
-
     """
     Class definition that handles signal reconstruction of a transformed input signal given
     the measurement basis. Able to perform standard compressed sensing and compressive 
@@ -2302,8 +2227,6 @@ def is_deterministic(A, tol=1e-6):
     KeyError
         If no measurement transform has been specified.
     """
-
-
 
     """ 
     Checks if the input CP map is a deterministic process. Check method
@@ -2315,7 +2238,8 @@ def is_deterministic(A, tol=1e-6):
 
     # check if A-form
 
-def Ejk(d,j,k):
+
+def Ejk(d, j, k):
     """
     Returns the zero dxd complex matrix with a 1 at index j,k 
 
@@ -2333,8 +2257,8 @@ def Ejk(d,j,k):
     ------
     """
     # construct zero complex matrix
-    ejk = np.zeros((d,d), dtype=np.complex128)
-    ejk[j,k] = 1
+    ejk = np.zeros((d, d), dtype=np.complex128)
+    ejk[j, k] = 1
     return ejk
 
 
@@ -2356,10 +2280,10 @@ def gellman_gen(d):
     """
 
     # basic input parsing
-    assert d>1 and type(d) is int, "Dimension must be positive integer greater than 1"
+    assert d > 1 and type(d) is int, "Dimension must be positive integer greater than 1"
 
     # preallocate set arry
-    gellman = np.empty((d**2, d, d), dtype=np.complex128)
+    gellman = np.empty((d ** 2, d, d), dtype=np.complex128)
 
     # iterate through use cases
     ind = 0
@@ -2369,11 +2293,11 @@ def gellman_gen(d):
             set_el_sym = Ejk(d, j, k) + Ejk(d, k, j)
 
             # create antisymmetric component
-            set_el_asym = -1j*(Ejk(d, j, k) - Ejk(d, k, j)) 
+            set_el_asym = -1j * (Ejk(d, j, k) - Ejk(d, k, j))
 
             # add to set
-            gellman[ind,:,:] = set_el_sym
-            gellman[ind+1,:,:] = set_el_asym
+            gellman[ind, :, :] = set_el_sym
+            gellman[ind + 1, :, :] = set_el_asym
 
             # step counter
             ind += 2
@@ -2382,19 +2306,19 @@ def gellman_gen(d):
     for l in range(1, d):
 
         # initialise zero matrix
-        diagonal = np.zeros((d,d), dtype=np.complex128)
-        coeff = np.sqrt(2/((l)*(l+1)))
-        for i in range(0,l):
-            diagonal += (Ejk(d,i,i))  
+        diagonal = np.zeros((d, d), dtype=np.complex128)
+        coeff = np.sqrt(2 / ((l) * (l + 1)))
+        for i in range(0, l):
+            diagonal += (Ejk(d, i, i))
 
-        diagonal -= l*Ejk(d,l,l)    
+        diagonal -= l * Ejk(d, l, l)
 
         # add to collection
-        gellman[ind,:,:] = coeff*diagonal
+        gellman[ind, :, :] = coeff * diagonal
         ind += 1
 
     # add identity to set
-    gellman[-1,:,:] = np.eye(d, dtype=np.complex128)
+    gellman[-1, :, :] = np.eye(d, dtype=np.complex128)
     return gellman
 
 
@@ -2413,22 +2337,23 @@ def raise_lower_gen(n):
     """
 
     # define diagonal entries
-    raise_diag = np.sqrt(np.asarray(range(1,n+1)))
-    lower_diag = np.sqrt(np.asarray(range(1,n+1)))
+    raise_diag = np.sqrt(np.asarray(range(1, n + 1)))
+    lower_diag = np.sqrt(np.asarray(range(1, n + 1)))
 
     # construct raising and lowering operators
     raise_op = np.diag(raise_diag, k=-1)
     lower_op = np.diag(lower_diag, k=1)
 
-    return raise_op,lower_op
+    return raise_op, lower_op
 
 
 def is_tp(M, input_dims=None):
     """"
     Checks if an input Choi operator is trace preserving
-    """ 
+    """
     # TODO
-    pass 
+    pass
+
 
 def link_product(Choi_A, Choi_B, subsystems=1, common=[]):
     """
@@ -2465,7 +2390,7 @@ def link_product(Choi_A, Choi_B, subsystems=1, common=[]):
         pass
 
     # normalise and return
-    return np.shape(Choi_C)[0]*Choi_C/np.trace(Choi_C)
+    return np.shape(Choi_C)[0] * Choi_C / np.trace(Choi_C)
 
 
 # generates direct product sum of arrayset according to combination
@@ -2477,17 +2402,18 @@ def dirsum(arrayset, combination):
         U = block_diag(U, arrayset[i])
     return U
 
-def multikron(A,r):
+
+def multikron(A, r):
     """
     Computes the tensor power of A^\otimes r
     """
     B = 1.0
     for i in range(r):
-        B = np.kron(B,A)
+        B = np.kron(B, A)
     return B
 
 
-def tf_kron(A,B):
+def tf_kron(A, B):
     """
     Computes the tensor power of A^\otimes r using tensorflow ops
     """
@@ -2495,22 +2421,22 @@ def tf_kron(A,B):
     A = tf.linalg.LinearOperatorFullMatrix(A)
     B = tf.linalg.LinearOperatorFullMatrix(B)
     # compute kronecker product
-    C = tf.linalg.LinearOperatorKronecker([A,B])
+    C = tf.linalg.LinearOperatorKronecker([A, B])
 
     return tf.convert_to_tensor(C, dtype=tf.complex64)
 
 
-def tf_multikron(A,r):
+def tf_multikron(A, r):
     """
     Computes the tensor power of A^\otimes r using tensorflow ops
     """
     A = tf.linalg.LinearOperatorFullMatrix(A)
-    B = tf.linalg.LinearOperatorFullMatrix(tf.constant([[1]],dtype=tf.complex64))
+    B = tf.linalg.LinearOperatorFullMatrix(tf.constant([[1]], dtype=tf.complex64))
 
     for i in range(r):
-        B = tf.linalg.LinearOperatorKronecker([B,A])
+        B = tf.linalg.LinearOperatorKronecker([B, A])
 
-    return tf.convert_to_tensor(B.to_dense(),dtype=tf.complex64)
+    return tf.convert_to_tensor(B.to_dense(), dtype=tf.complex64)
 
 
 def dagger(M):
@@ -2526,19 +2452,19 @@ def MUB_gen(d):
     """
 
     # base constant
-    w = np.exp(2*np.pi*1j/d)
+    w = np.exp(2 * np.pi * 1j / d)
     # MUB container
-    mub = np.zeros((d+1,d,d,d),dtype=np.complex128)
+    mub = np.zeros((d + 1, d, d, d), dtype=np.complex128)
     # assign computational basis
     for i in range(d):
         mub[0, i, i, i] = 1.0
 
-    for k in range(1,d+1):
+    for k in range(1, d + 1):
         for m in range(d):
-            state = np.zeros((d,1), dtype=np.complex128)
+            state = np.zeros((d, 1), dtype=np.complex128)
             for l in range(d):
-                el = mub[0,l,:,l].reshape(d,1)
-                state += w**(k*(l**2)+m*l) * el/np.sqrt(d)   
+                el = mub[0, l, :, l].reshape(d, 1)
+                state += w ** (k * (l ** 2) + m * l) * el / np.sqrt(d)
             mub[k, m, :, :] = np.kron(state, dagger(state))
 
     return mub

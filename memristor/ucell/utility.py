@@ -254,7 +254,7 @@ def clements_stitch(tlist, diags):
     U = np.diag(np.conjugate(diags))
     # iterate over specified beam splitter arrays
     for Tmn in tlist[::-1]:
-        # construct beamsplitter given parameters
+        # construct beam splitter given parameters
         bm = T(*Tmn)
         U = U @ bm
     return U
@@ -871,7 +871,7 @@ def null_matrix(modes, photons, convert=False):
 def weight_matrix(modes, photons, w=5, convert=False):
     """
     computes weight matrix for loss calcuation updates by penalising 
-    indistingushable states for NOON states
+    indistinguishable states for NOON states
     """
 
     # compute dimension of system

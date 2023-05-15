@@ -1,67 +1,83 @@
 from QHH_1 import QHH_1
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.integrate import odeint
 
-
-def hh_model_quantized(t, y, I, Vc, k1, k2, k3, k4):
-    """
-    Implementation of the Quantized Single-Ion-Channel Hodgkin-Huxley Model for Quantum Neurons.
-
-    Args:
-    - t: float, time point at which to evaluate the model
-    - y: list of floats, the current values of the variables in the model
-    - I: float, external current input
-    - Vc: float, capacitance of the cell
-    - k1, k2, k3, k4: float, model parameters
-
-    Returns:
-    - dydt: list of floats, the derivative of each variable at time t
-    """
-    # Define variables
-    V, m, h, n = y
-
-    # Define differential equations
-    dVdt = (I - k1 * m ** 3 * h * (V - k2)) / Vc
-    dmdt = k3 * (1 - m) * np.exp(-(V - k4) / 10) - k3 * m * np.exp((V - k4) / 10)
-    dhdt = k3 * (1 - h) * np.exp(-(V - k4) / 10) - k3 * h * np.exp((V - k4) / 10)
-    dndt = k3 * (1 - n) * np.exp(-(V - k4) / 80) - k3 * n * np.exp((V - k4) / 80)
-
-    # Return derivatives
-    dydt = [dVdt, dmdt, dhdt, dndt]
-    return dydt
 
 """
     Simulation of Quantized three-ion-channel Hodgkin-Huxley model
 """
 if __name__ == "__main__":
     qhh = QHH_1()
-    
-    # Define initial conditions and parameters
-    y0 = [-65, 0.05, 0.6, 0.32]
-    I = 10
-    Vc = 1
-    k1 = 120
-    k2 = -50
-    k3 = 0.1
-    k4 = -77
 
-    # Define time points to evaluate the model
-    t = np.linspace(0, 100, 1000)
+    eps = 0.0001
+    tmax = 5
+    ts = np.arange(0, tmax, eps)
+    Zk = np.zeros(len(ts))
 
-    temp = hh_model_quantized(t, y0, I, Vc, k1, k2, k3, k4)
-    print(temp)
+    # Spike try parameters
+    Cc = 10 ** (-6)
 
-    # Solve the differential equations
-    sol = odeint(hh_model_quantized, y0, t, args=(I, Vc, k1, k2, k3, k4))
+    # Impedance of the outgoing transmission line
+    Zout = 50
 
-    print(sol)
+    # Activation variable values
+    n0 = 0.4
 
-    plt.plot(t, sol[:, 0], label='V')
-    plt.plot(t, sol[:, 1], label='m')
-    plt.plot(t, sol[:, 2], label='h')
-    plt.plot(t, sol[:, 3], label='n')
-    plt.legend()
-    plt.xlabel('Time (ms)')
-    plt.ylabel('State variable value')
+    # Initial update of the system
+    # Chloride channel = constant = 1 / GK
+    # GK = max potassium conductance * m0^4
+    Zk[0] = 1 / (1.33 * (n0 ** 4))
+
+    # I0=1
+    w = np.full((len(ts)), 10)
+    I0 = np.full((len(ts)), 1)
+    I0[:int(len(ts) / 4)] = 0
+    w[:int(len(ts) / 4)] = 0
+
+    # Input current of the system
+    I = np.multiply(I0, np.sin(np.multiply(w, ts)))
+
+    # Voltage
+    Vm = np.zeros(len(ts))
+    Vm[0] = qhh.V(Zk[0], I0[0], w[0], ts[0], Cc)
+
+    # Update of the system
+    # TODO: Change the implementation of the update to adapt it to the photonic memristor
+    for i in range(len(ts) - 1):
+        t = ts[i]
+
+        k1 = qhh.k(t, eps, Zk[i], I0[i], w[i], Cc, n0)
+
+        k2 = qhh.k(t + 0.5 * eps, eps, Zk[i] + 0.5 * k1, I0[i], w[i], Cc, n0)
+
+        k3 = qhh.k(t + 0.5 * eps, eps, Zk[i] + 0.5 * k2, I0[i], w[i], Cc, n0)
+
+        k4 = qhh.k(t + eps, eps, Zk[i] + k3, I0[i], w[i], Cc, n0)
+
+        # Update voltage of the potassium and sodium channels
+        Zk[i + 1] = Zk[i] + (1 / 6) * (k1 + 2 * k2 + 2 * k3 + k4)
+        print(Zk[i])
+
+        # Update voltage of the system
+        Vm[i + 1] = qhh.V(Zk[i + 1], I0[i], w[i], ts[i + 1], Cc)
+
+    Gk = 1.0 / Zk
+
+    plt.subplot(2, 2, 1)
+    plt.plot(ts, I, 'b')
+    plt.title("Input Current")
+
+    plt.subplot(2, 2, 2)
+    plt.plot(ts, Vm, 'r')
+    plt.title("Voltage")
+
+    plt.subplot(2, 2, 3)
+    plt.plot(ts, Gk, 'g')
+    plt.title("Potassium Conductance Gk")
+
+    # plt.subplot(2, 2, 4)
+    # plt.plot(ts, I, 'y')
+    # plt.title("Sodium Conductance GNa")
+
+    plt.tight_layout()
     plt.show()

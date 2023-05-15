@@ -6,7 +6,7 @@ pbar = 6.626070040e-34
 # reduced
 hbar = pbar / (2 * np.pi)
 # Bohr magneton in J/Gauss
-mub = (9.274009994e-24) / 1e4
+mub = 9.274009994e-24 / 1e4
 # g factor
 gm = 2.00231930436
 # Gyromagnetic ratio

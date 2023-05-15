@@ -28,7 +28,7 @@ class QEncoder(object):
         Applies a granulation function to input data as preporcessing for the encoder. Assumes real data.
         """
         # rescale data from [-infty, infty] range into zero to one using logistic function
-        data_parse = 1/(1+np.exp(-data))
+        data_parse = 1 / (1 + np.exp(-data))
 
         # rescale again if strictly positive range
         if positive:
@@ -38,19 +38,19 @@ class QEncoder(object):
             data_parse /= np.max(data_parse)
 
         # now granulate according to desired number of levels
-        inc = 1/levels
+        inc = 1 / levels
         lbnd = 0.0
-        ubnd = 1/levels
+        ubnd = 1 / levels
         for i in range(levels):
             # assign value to interval
-            truth_mask = (data_parse<ubnd) & (data_parse>lbnd)
+            truth_mask = (data_parse < ubnd) & (data_parse > lbnd)
             data_parse[truth_mask] = i
             # update 
-            lbnd += inc 
+            lbnd += inc
             ubnd += inc
 
         # return as smallest non-boolean type available
-        return data_parse.astype(np.uint8)   
+        return data_parse.astype(np.uint8)
 
     def encode(self, data, method="amplitude", normalise=True, **kwargs):
         """
@@ -87,7 +87,7 @@ class QEncoder(object):
         data = self._granulate(data, levels=2)
 
         # get shape of array and package as instance, input dimension and time series length
-        N,in_dim,tlen = np.shape(data)
+        N, in_dim, tlen = np.shape(data)
 
         # generate state encodings - assume modes and photons are enough
         encodings = basis_generator(self.dim)
@@ -97,21 +97,23 @@ class QEncoder(object):
             np.random.shuffle(encodings)
 
         # assert encoding is sufficent assuming binary data
-        assert 2**in_dim<=len(encodings), "Woah hey woah, your system size is not sufficient to encode all states: {}<{}".format(len(encodings), 2**in_dim) 
+        assert 2 ** in_dim <= len(
+            encodings), "Woah hey woah, your system size is not sufficient to encode all states: {}<{}".format(
+            len(encodings), 2 ** in_dim)
 
         # preallocate output encoding array as vector state or density operator
         if self.density:
-            data_encode = np.zeros((N,tlen,self.dim,self.dim), dtype=np.complex64)
+            data_encode = np.zeros((N, tlen, self.dim, self.dim), dtype=np.complex64)
         else:
-            data_encode = np.zeros((N,tlen,self.dim), dtype=np.complex64)
+            data_encode = np.zeros((N, tlen, self.dim), dtype=np.complex64)
 
         # no doubt smarter way of computing this but it doesn't matter for the problem sizes we consider
         for i in range(N):
-            if i % 100==0:
-                print("{}/{} images encoded in quantum state space".format(i,N), end="\r")
+            if i % 100 == 0:
+                print("{}/{} images encoded in quantum state space".format(i, N), end="\r")
             for j in range(tlen):
                 # get classical state
-                classical_state = data[i,:,j]
+                classical_state = data[i, :, j]
 
                 # compute index of state to map it to
                 ind = int(''.join(str(s) for s in classical_state), 2)
@@ -125,46 +127,46 @@ class QEncoder(object):
 
         return data_encode
 
-    def _amplitude_map(self, data, levels=0,):
+    def _amplitude_map(self, data, levels=0, ):
         """
         Generates a standard amplitude encoding scheme. Hard to prepare in practice
         but acceptable for prototyping.
         """
 
         # get shape of array and package as instance, input dimension and time series length
-        N,in_dim,tlen = np.shape(data)
+        N, in_dim, tlen = np.shape(data)
 
         # check whether to apply any kind of granulation effect
-        if levels>0:
+        if levels > 0:
             print("Parse number set: applying logistic scaling and granulation")
             data = self._granulate(data, levels=levels)
 
         # preallocate output encoding array as vector state or density operator
         if self.density:
-            data_encode = np.zeros((N,tlen,self.dim,self.dim), dtype=np.complex64)
+            data_encode = np.zeros((N, tlen, self.dim, self.dim), dtype=np.complex64)
         else:
-            data_encode = np.zeros((N,tlen,self.dim), dtype=np.complex64)
+            data_encode = np.zeros((N, tlen, self.dim), dtype=np.complex64)
 
         # generate computational basis elements
         basis = np.eye(self.dim, dtype=np.complex128)
 
         # convert each data element - likely a smart way to vectorise it but its not worth it here
         for i in range(N):
-            if i % 100==0:
-                print("{}/{} images encoded in quantum state space using amplitude map scheme".format(i,N), end="\r")
-            
+            if i % 100 == 0:
+                print("{}/{} images encoded in quantum state space using amplitude map scheme".format(i, N), end="\r")
+
             # iterate over each column
             for t in range(tlen):
                 # construct a new state vector
                 state = np.zeros((self.dim,), dtype=np.complex128)
-                state[:in_dim] = data[i,:,t]
+                state[:in_dim] = data[i, :, t]
 
                 # normalise state vector
                 state /= np.linalg.norm(state, 2)
 
                 # assign to output set
                 if self.density:
-                    state = state.reshape([-1,1])
+                    state = state.reshape([-1, 1])
                     data_encode[i, t, :, :] = np.kron(state, dagger(state))
                 else:
                     data_encode[i, t, :] = state
@@ -183,9 +185,9 @@ class QEncoder(object):
         fourth_layer = [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10], [11, 12]]
 
         # compile topology list and return in reverse order 
-        return fourth_layer+third_layer+second_layer+first_layer
+        return fourth_layer + third_layer + second_layer + first_layer
 
-    def _milano_map(self, data, parse=False, masks=None, input_state=None, base=[0, 2*np.pi/3, 4*np.pi/3]):
+    def _milano_map(self, data, parse=False, masks=None, input_state=None, base=[0, 2 * np.pi / 3, 4 * np.pi / 3]):
         """
         A highly specific encoding scheme using Milano optical chip - use eigenstate or amplitude encoding unless you know 
         what you are doing!
@@ -221,20 +223,19 @@ class QEncoder(object):
 
         # preallocate output encoding array as vector state or density operator
         if self.density:
-            data_encode = np.empty((N,tlen,self.dim,self.dim), dtype=np.complex128)
+            data_encode = np.empty((N, tlen, self.dim, self.dim), dtype=np.complex128)
         else:
-            data_encode = np.empty((N,tlen,self.dim), dtype=np.complex128)
-
+            data_encode = np.empty((N, tlen, self.dim), dtype=np.complex128)
 
         # iterate over each and every input image
         for i in range(N):
-            if i % 100==0:
-                print("{}/{} images encoded in quantum state space using Milano scheme".format(i,N), end="\r")
+            if i % 100 == 0:
+                print("{}/{} images encoded in quantum state space using Milano scheme".format(i, N), end="\r")
             # iterate over each column
             for t in range(tlen):
                 # get the classical data to be encoded
-                classical_state = list(data[i,:,t])
-                
+                classical_state = list(data[i, :, t])
+
                 # convert to string description
                 state_string = ''.join(str(s) for s in classical_state)
 
@@ -248,17 +249,16 @@ class QEncoder(object):
                     # apply weighted mask for each pre-encoder MZI
                     for mask in masks:
                         # compute maximum value possible for mask
-                        max_val = np.sum(mask*(len(base)-1))
+                        max_val = np.sum(mask * (len(base) - 1))
                         # compute unscaled phase value for pre-encoder
-                        phase_val = (base[-1]-base[0])*mask @ classical_state
+                        phase_val = (base[-1] - base[0]) * mask @ classical_state
                         # add to end of phase shifters and rescale with range
-                        phase_shifters.append(phase_val/max_val)
-
+                        phase_shifters.append(phase_val / max_val)
 
                     # now iterate over topology to generate encoder
 
                     # compute unitary from values
-                    #T(self.targets[0], self.targets[1], theta, theta, self.modes)
+                    # T(self.targets[0], self.targets[1], theta, theta, self.modes)
                     U = np.eye(self.dim)
 
                     # save computed unitary for repeated use
@@ -273,5 +273,3 @@ class QEncoder(object):
                     data_encode[i, t, :] = state
 
         return data_encode
-
-
