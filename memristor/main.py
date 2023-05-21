@@ -44,14 +44,15 @@ batch_size = 5
 lr_pow = 0
 # whether or not to train the network or just compile it
 train = True
-# whether to save resevoir mapping channel or recompute from scratch
+# whether to save reservoir mapping channel or recompute from scratch
 save = True
 # location and name of save file
-file_name = "MNIST_MAP.npz"  # "\\\\FREENAS\\Organon\\Research\\Papers\\QMemristor\\Code\\Archive\\MNIST_MAP.npz"
+file_name = "XMNIST_MAP.npz"  # "\\\\FREENAS\\Organon\\Research\\Papers\\QMemristor\\Code\\Archive\\MNIST_MAP.npz"
 # location and name of model save
 modelfile_name = ""  # "\\\\FREENAS\\Organon\\Research\\Archive\\ML\\models\\checkpoint"
 # task toggle ("witness" or "mnist")
 task = "mnist"
+
 # ------------------------------------------------------------
 # Section 1: define program constants
 # ------------------------------------------------------------
@@ -99,16 +100,26 @@ else:
         # load MNIST data
         (x_train, y_train), (x_test, y_test) = tf.keras.datasets.mnist.load_data()
 
+        # Shape: (60000, 28, 28)
+        print('Initial Shape 1: ', x_train.shape)
+
         x_train, y_train = filter_36(x_train, y_train)
         x_test, y_test = filter_36(x_test, y_test)
+
+        # Shape: (18012, 28, 28)
+        print('Shape after filter36: ', x_train.shape)
 
         # add channel axis (tensorflow being lame)
         x_train = x_train[..., tf.newaxis]
         x_test = x_test[..., tf.newaxis]
+
         # downsample for easy initial training
         data_train = np.squeeze(tf.image.resize(x_train, (14, 14)).numpy())[:, 1:-1, 2:-2]
         data_test = np.squeeze(tf.image.resize(x_test, (14, 14)).numpy())[:, 1:-1, 2:-2]
         # data_train[:,-1,:] = data_test[:,-1,:] = 1.0
+
+        # Shape: (18012, 12, 10)
+        print('Shape after sqeeze: ', data_train.shape)
 
         # remove conflicting training items
         data_train, y_train = remove_contradicting(data_train, y_train)
@@ -122,9 +133,16 @@ else:
         # data_train = eigen_encode_map(data_train, modes, photons)
         # data_test = eigen_encode_map(data_test, modes, photons)
 
-        # pass through resevoir
+        # Shape: (18012, 10, 56, 56)
+        print('Shape after quantum encoding: ', data_train.shape)
+
+        # pass through reservoir
+        # TODO: 2 memristor is applied to data!!
         data_train = reservoir_map(data_train, modes, photons, pdesc, targets, temporal_num)
         data_test = reservoir_map(data_test, modes, photons, pdesc, targets, temporal_num)
+
+        # Shape: (18012, 56, 56)
+        print('Shape after reservoir: ', data_train.shape)
 
         # save this mapped data so we don't have to recompute
         if save:
@@ -137,6 +155,9 @@ else:
         data_test = data_test[:1000]
         y_train = y_train[:1000]
         y_test = y_test[:1000]
+
+        # Shape: (1000, 56, 56)
+        print('Final shape: ', data_train.shape)
 
 # ------------------------------------------------------------
 # Section 3: Define network topology

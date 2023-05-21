@@ -732,14 +732,15 @@ def eigen_encode_map(data, modes, photons, rand_encoding=False, density=True):
     return data_encode
 
 
+#TODO: useful 1 --> memristor implementation on data!
 def reservoir_map(data, modes, photons, pdesc, targets, temporal_num):
     """
-    Applies resevoir channel to input data sequence
+    Applies reservoir channel to input data sequence
     """
     # generate a Hadamard channel first
     hadamard_layer = BSArray(modes, photons, force=True)
 
-    # iterate through each layer of resevoir
+    # iterate through each layer of reservoir
     for layer_num in range(temporal_num):
 
         # apply hadamard channel
