@@ -2,30 +2,13 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import os
-import sys
-import copy
-import time
 import keras
-import warnings
-import collections
-
-import numpy as np
-from utility import *
-from test_data import *
-import tensorflow as tf
-from qinfo.qinfo import partial_trace2
+from keras import optimizers, Input
+from keras.initializers import RandomUniform
+from keras.layers import Dense
 from keras.models import Model
-import matplotlib.pyplot as plt
-from keras.layers import Input
-from datetime import datetime
-from keras import optimizers
-from scipy.special import comb
-from keras.initializers import RandomUniform, Identity
-from keras.layers import Dense, ReLU
-from keras import activations
-from keras.callbacks import LearningRateScheduler, TensorBoard
-from ucell.ucell import UParamLayer, RevDense, ReNormaliseLayer, ULayer
+
+from utility import *
 
 config = tf.compat.v1.ConfigProto(intra_op_parallelism_threads=12,
                                   inter_op_parallelism_threads=12,
@@ -80,6 +63,7 @@ pdesc = {'theta_init': 0.1, 'MZI_target': [1, 2, 2], "tlen": 10}
 dim = comb(modes + photons - 1, photons, exact=True)
 # initialiser for dense network
 init = RandomUniform(minval=-1, maxval=1, seed=None)
+
 # ------------------------------------------------------------
 # Section 2: Apply resevoir compute layer to quantum data encoding 
 # ------------------------------------------------------------
@@ -90,6 +74,12 @@ if task == "witness":
 
     data_train = reservoir_map(data_train, modes, photons, pdesc, targets, temporal_num)
     data_test = reservoir_map(data_test, modes, photons, pdesc, targets, temporal_num)
+
+
+elif task == "HHmodel":
+    # TODO: Apply Experimental Memristor to HH Model
+    data_train, y_train, data_test, y_test = ...
+
 
 else:
 
