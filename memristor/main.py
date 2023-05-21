@@ -2,24 +2,30 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import os
+import sys
+import copy
+import time
 import keras
+import warnings
+import collections
 
-
+import numpy as np
 from utility import *
-
 from test_data import *
 import tensorflow as tf
+from qinfo.qinfo import partial_trace2
 from keras.models import Model
+import matplotlib.pyplot as plt
 from keras.layers import Input
+from datetime import datetime
 from keras import optimizers
 from scipy.special import comb
-from keras.datasets import mnist
 from keras.initializers import RandomUniform, Identity
-from keras.layers import Dense
-
-"""
-UNUSED!!!
-"""
+from keras.layers import Dense, ReLU
+from keras import activations
+from keras.callbacks import LearningRateScheduler, TensorBoard
+from ucell.ucell import UParamLayer, RevDense, ReNormaliseLayer, ULayer
 
 config = tf.compat.v1.ConfigProto(intra_op_parallelism_threads=12,
                                   inter_op_parallelism_threads=12,
@@ -27,6 +33,8 @@ config = tf.compat.v1.ConfigProto(intra_op_parallelism_threads=12,
                                   device_count={'CPU': 24})
 
 session = tf.compat.v1.Session(config=config)
+# np.random.seed(1234)
+
 
 # ------------------------------------------------------------
 # Section 0: Program parameter definitions
@@ -66,7 +74,7 @@ task = "mnist"
 # ------------------------------------------------------------
 # define spatial depth 
 spatial_num = len(targets)
-# define a single instance of memristor element as example desciption
+# define a single instance of memristor element as example description
 pdesc = {'theta_init': 0.1, 'MZI_target': [1, 2, 2], "tlen": 10}
 # compute dimension of input network
 dim = comb(modes + photons - 1, photons, exact=True)
@@ -89,6 +97,7 @@ else:
     if os.path.isfile(file_name):
         # load saved data
         save_data = np.load(file_name)
+
         # extract all data
         data_train = save_data["data_train"]
         data_test = save_data["data_test"]
@@ -98,7 +107,7 @@ else:
     else:
 
         # load MNIST data
-        (x_train, y_train), (x_test, y_test) = mnist.load_data()
+        (x_train, y_train), (x_test, y_test) = tf.keras.datasets.mnist.load_data()
 
         x_train, y_train = filter_36(x_train, y_train)
         x_test, y_test = filter_36(x_test, y_test)
@@ -113,28 +122,31 @@ else:
 
         # remove conflicting training items
         data_train, y_train = remove_contradicting(data_train, y_train)
-        data_train, y_train = remove_contradicting(data_test, y_test)
+        data_test, y_test = remove_contradicting(data_test, y_test)
 
         # apply encoding of classical data to quantum state space
         encoder = QEncoder(modes=modes, photons=photons, density=True)
-        # data_train = encoder.encode(data=data_train, method="amplitude", normalise=True)
+        data_train = encoder.encode(data=data_train, method="amplitude", normalise=True)
         data_test = encoder.encode(data=data_test, method="amplitude", normalise=True)
 
         # data_train = eigen_encode_map(data_train, modes, photons)
         # data_test = eigen_encode_map(data_test, modes, photons)
 
-        # pass through reservoir
+        # pass through resevoir
         data_train = reservoir_map(data_train, modes, photons, pdesc, targets, temporal_num)
         data_test = reservoir_map(data_test, modes, photons, pdesc, targets, temporal_num)
 
         # save this mapped data so we don't have to recompute
         if save:
-            np.savez(file_name, data_train=data_train, data_test=data_test, y_train=y_train, y_test=y_test)
+            np.savez(file_name, data_train=data_train,
+                     data_test=data_test,
+                     y_train=y_train,
+                     y_test=y_test)
 
-    data_train = data_train[:1000]
-    data_test = data_test[:1000]
-    y_train = y_train[:1000]
-    y_test = y_test[:1000]
+        data_train = data_train[:1000]
+        data_test = data_test[:1000]
+        y_train = y_train[:1000]
+        y_test = y_test[:1000]
 
 # ------------------------------------------------------------
 # Section 3: Define network topology
@@ -143,7 +155,7 @@ else:
 # define input layer of network, no longer a time sequence to be considered
 input_state = Input(batch_shape=[None, dim, dim], dtype=tf.complex64, name="state_input")
 
-# extract classical output state of reservoir
+# extract classical output state of resevoir
 # output = ULayer(modes, photons, force=True)(input_state)
 output = MeasureLayer(modes, photons, force=True)(input_state)
 # feed this into a small feedforward network
@@ -155,16 +167,17 @@ output = Dense(units=20)(output)
 output = Dense(units=3, activation="softmax", use_bias=True)(output)
 
 # define standard optimiser
-opt = optimizers.Adam(lr=init_lr)
+opt = optimizers.Adam(learning_rate=init_lr)
 
 # define loss function
-loss = tf.keras.losses.CategoricalCrossentropy(from_logits=True,
-                                               label_smoothing=0,
-                                               reduction="auto",
-                                               name="categorical_crossentropy")
+loss = tf.keras.losses.CategoricalCrossentropy(
+    from_logits=False,
+    label_smoothing=0,
+    reduction="auto",
+    name="categorical_crossentropy")
 
 # define the model
-model = Model(inputs=input_state, output=output, name="Optical_Resevoir_Compute_Network")
+model = Model(inputs=input_state, outputs=output, name="Optical_Resevoir_Compute_Network")
 
 # ------------------------------------------------------------
 # Section 4: Model compilation and training
