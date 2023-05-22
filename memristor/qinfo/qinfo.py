@@ -1,6 +1,5 @@
 """
 A collection of useful functions for problems in quantum information theory.
-
 """
 
 import numpy as np
@@ -1774,7 +1773,7 @@ def randCP_gen(d):
     rho = np.squeeze(haar_sample(N=int(round(np.log2(d))), num=1))
 
 
-def randpovm_gen(d, ):
+def randpovm_gen():
     """
     Generates a random POVM set using the method described in https://arxiv.org/pdf/1902.04751
     
@@ -1801,7 +1800,7 @@ def randpovm_gen(d, ):
     """
 
 
-class ControlSpan():
+class ControlSpan:
     """
     Class definition that handles signal reconstruction of a transformed input signal given
     the measurement basis. Able to perform standard compressed sensing and compressive 
@@ -1990,7 +1989,7 @@ def Universal_U():
     return U
 
 
-class ProcessTensor():
+class ProcessTensor:
     """
     Class definition that handles signal reconstruction of a transformed input signal given
     the measurement basis. Able to perform standard compressed sensing and compressive 
@@ -2109,7 +2108,7 @@ class ProcessTensor():
         else:
             # list of qubits in environmental system to trace out
             t_qubits = list(range(0, self.eq))
-            return partialtrace(rho, t_qubits)
+            return partial_trace2(rho, t_qubits)
 
     def pt_tomog(self):
         """
@@ -2442,13 +2441,6 @@ def tf_multikron(A, r):
         B = tf.linalg.LinearOperatorKronecker([B, A])
 
     return tf.convert_to_tensor(B.to_dense(), dtype=tf.complex64)
-
-
-def dagger(M):
-    """
-    Return conjugate transpose of input array
-    """
-    return np.transpose(np.conjugate(M))
 
 
 def MUB_gen(d):

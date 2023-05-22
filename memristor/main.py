@@ -45,9 +45,9 @@ lr_pow = 0
 # whether or not to train the network or just compile it
 train = True
 # whether to save reservoir mapping channel or recompute from scratch
-save = True
+save = False
 # location and name of save file
-file_name = "XMNIST_MAP.npz"  # "\\\\FREENAS\\Organon\\Research\\Papers\\QMemristor\\Code\\Archive\\MNIST_MAP.npz"
+file_name = "MNIST_MAP.npz"  # "\\\\FREENAS\\Organon\\Research\\Papers\\QMemristor\\Code\\Archive\\MNIST_MAP.npz"
 # location and name of model save
 modelfile_name = ""  # "\\\\FREENAS\\Organon\\Research\\Archive\\ML\\models\\checkpoint"
 # task toggle ("witness" or "mnist")
@@ -66,7 +66,7 @@ dim = comb(modes + photons - 1, photons, exact=True)
 init = RandomUniform(minval=-1, maxval=1, seed=None)
 
 # ------------------------------------------------------------
-# Section 2: Apply resevoir compute layer to quantum data encoding 
+# Section 2: Apply reservoir computer layer to quantum data encoding
 # ------------------------------------------------------------
 
 if task == "witness":
@@ -79,8 +79,7 @@ if task == "witness":
 
 elif task == "HHmodel":
     # TODO: Apply Experimental Memristor to HH Model
-    data_train, y_train, data_test, y_test = ...
-
+    print()
 
 else:
 
@@ -101,6 +100,13 @@ else:
         (x_train, y_train), (x_test, y_test) = tf.keras.datasets.mnist.load_data()
 
         # Shape: (60000, 28, 28)
+        #
+        # assert x_train.shape == (60000, 28, 28)
+        # assert x_test.shape == (10000, 28, 28)
+        # assert y_train.shape == (60000,)
+        # assert y_test.shape == (10000,)
+        #
+        # 60,000 28x28 grayscale images of the 10 digits
         print('Initial Shape 1: ', x_train.shape)
 
         x_train, y_train = filter_36(x_train, y_train)
@@ -137,7 +143,7 @@ else:
         print('Shape after quantum encoding: ', data_train.shape)
 
         # pass through reservoir
-        # TODO: 2 memristor is applied to data!!
+        # TODO: 2 --> memristor is applied to data
         data_train = reservoir_map(data_train, modes, photons, pdesc, targets, temporal_num)
         data_test = reservoir_map(data_test, modes, photons, pdesc, targets, temporal_num)
 

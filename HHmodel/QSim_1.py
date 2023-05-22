@@ -10,7 +10,7 @@ if __name__ == "__main__":
     qhh = QHH_1()
 
     eps = 0.0001
-    tmax = 5
+    tmax = 10
     ts = np.arange(0, tmax, eps)
     Zk = np.zeros(len(ts))
 
@@ -20,7 +20,7 @@ if __name__ == "__main__":
     # Impedance of the outgoing transmission line
     Zout = 50
 
-    # Activation variable values
+    # Activation variable value
     n0 = 0.4
 
     # Initial update of the system
@@ -28,7 +28,6 @@ if __name__ == "__main__":
     # GK = max potassium conductance * m0^4
     Zk[0] = 1 / (1.33 * (n0 ** 4))
 
-    # I0=1
     w = np.full((len(ts)), 10)
     I0 = np.full((len(ts)), 1)
     I0[:int(len(ts) / 4)] = 0
@@ -42,7 +41,7 @@ if __name__ == "__main__":
     Vm[0] = qhh.V(Zk[0], I0[0], w[0], ts[0], Cc)
 
     # Update of the system
-    # TODO: Change the implementation of the update to adapt it to the photonic memristor
+    # TODO: Fix implementation of QHH only with Potassium K Ion
     for i in range(len(ts) - 1):
         t = ts[i]
 
@@ -54,30 +53,26 @@ if __name__ == "__main__":
 
         k4 = qhh.k(t + eps, eps, Zk[i] + k3, I0[i], w[i], Cc, n0)
 
-        # Update voltage of the potassium and sodium channels
+        # Update voltage of the potassium channel
         Zk[i + 1] = Zk[i] + (1 / 6) * (k1 + 2 * k2 + 2 * k3 + k4)
-        print(Zk[i])
 
         # Update voltage of the system
         Vm[i + 1] = qhh.V(Zk[i + 1], I0[i], w[i], ts[i + 1], Cc)
 
     Gk = 1.0 / Zk
 
-    plt.subplot(2, 2, 1)
+    plt.subplot(3, 1, 1)
     plt.plot(ts, I, 'b')
     plt.title("Input Current")
 
-    plt.subplot(2, 2, 2)
+    plt.subplot(3, 1, 2)
     plt.plot(ts, Vm, 'r')
     plt.title("Voltage")
 
-    plt.subplot(2, 2, 3)
+    plt.subplot(3, 1, 3)
     plt.plot(ts, Gk, 'g')
     plt.title("Potassium Conductance Gk")
 
-    # plt.subplot(2, 2, 4)
-    # plt.plot(ts, I, 'y')
-    # plt.title("Sodium Conductance GNa")
-
     plt.tight_layout()
     plt.show()
+

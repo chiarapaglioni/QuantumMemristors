@@ -244,7 +244,7 @@ def clements_phase_end(V, tol=1e-11):
 
         new_tlist = new_tlist + [new_i]
 
-    return (new_tlist, new_diags)
+    return new_tlist, new_diags
 
 
 def clements_stitch(tlist, diags):
@@ -292,7 +292,7 @@ def opto_gen(modes, targets):
     target pairs.
     """
 
-    # initliase specification container
+    # initliaze specification container
     bms_spec = []
 
     # for each target pair, generate a template decomp using standard functionality

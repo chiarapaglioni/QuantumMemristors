@@ -85,9 +85,4 @@ class QHH_3:
 
         f = eps*(-ZNa * (3*((alpha_m / m) - (alpha_m + beta_m)) + (alpha_h / h) - (alpha_h + beta_h)))
         return f
-
-    # Update of the system
-    # TODO: implement update rule R from photonic quantum memristor
-    def r(self):
-        pass
     

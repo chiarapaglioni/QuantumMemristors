@@ -4,8 +4,7 @@ import matplotlib.pyplot as plt
 import qfunk.qoptic as qop
 from keras.layers import Layer
 
-from qinfo.qinfo import dagger, haar_sample, multikron, gellman_gen, random_U
-from test_data import *
+from qinfo.qinfo import multikron, gellman_gen, random_U
 from ucell.utility import *
 
 
@@ -52,7 +51,7 @@ class QMemristor(object):
         else:
             self.mem_states[0] = self.pdesc['theta_init']
 
-            # save symmetric map for dilation to complete Fock space (much, much faster than permanents)
+        # save symmetric map for dilation to complete Fock space (much, much faster than permanents)
         self.S = symmetric_map(self.modes, self.photons)
         # build initial unitary array
         self.update(time_index=0)
@@ -126,10 +125,13 @@ class QMemristor(object):
         # set build flag
         self.built = True
 
+    # TODO: 3 --> MEMRISTOR
     def call(self, input_states):
         """
         Method that applies memristor element to encoded quantum state. Takes as input a single quantum
-        state sequence in density operator form 
+        state sequence in density operator form
+
+            input_states = 3 dimensional array
         """
 
         # some basic data checking to catch annoying to track errors
@@ -146,6 +148,9 @@ class QMemristor(object):
             unitary = self.unitary_array[i, :, :]
 
             # apply unitary to density operator
+            # (@ = matrix multiplication)
+            # dagger = conjugate transpose or the Hermitian transpose of a matrix
+            #        = taking the complex conjugate of each element and then transposing the matrix
             output_state = unitary @ time_input @ dagger(unitary)
 
             # apply unitary transform as left hand operator
@@ -173,6 +178,7 @@ class QMemristor(object):
                 self.mem_states[i + 1] *= 2 * np.pi / self.photons
 
                 # build next unitary operator in chain
+                # Memristive behavior --> builds new matrix based on the previous states
                 self.update(i + 1)
 
         # print(self.mem_states[-1])
@@ -184,11 +190,14 @@ class QMemristor(object):
         Updates state of internal network and rebuilds unitary with updated beam splitter values
         """
 
-        # average of previous outputs
-        theta = self.mem_states[
-            time_index]  # np.sum(self.mem_states + self.pdesc['theta_init'])/len(self.mem_states) #  #
+        # average of previous output
+        theta = self.mem_states[time_index]
+        print('Theta: ', theta)
+        # np.sum(self.mem_states + self.pdesc['theta_init'])/len(self.mem_states)
+
         # modes to act on 
         self.targets = self.pdesc['MZI_target']
+
         # define stateful unitary operator that applies current state of MZI to input 
         unitary = T(self.targets[0], self.targets[1], theta, 0, self.modes)
 
@@ -196,11 +205,11 @@ class QMemristor(object):
         self.unitary_array[time_index, :, :] = self.S @ multikron(unitary, self.photons) @ np.transpose(self.S)
 
 
-class BSArray():
+class BSArray:
     """
     Advanced layer that implements a stack of quantum memristors acting in parallel. 
     each memristor takes as input 4 modes - two being the input state, a third 
-    being the detector input (instantiated to no input) and a final sacrifical mode
+    being the detector input (instantiated to no input) and a final sacrificial mode
     that contains the destroyed photons. 
 
     pdesc = {'theta_init':None,'MZI_target': [m,m+1],'proj_mode': n!=m,m+1, 'sacrificial_mode': o!=n,m,m+1}
@@ -234,7 +243,7 @@ class BSArray():
         # create beam splitter decomposition
         bms_spec = clements_phase_end(np.eye(self.modes))[0]
 
-        # retest to beamsplitters with no phase effect (not that it matter)
+        # retest to beam splitters with no phase effect (not that it matter)
         for bm in bms_spec:
             bm[2] = 0
             bm[3] = np.random.rand()
@@ -343,7 +352,7 @@ class MeasureLayer(Layer):
         return [self.output_dim]
 
 
-class LearningRateDecay():
+class LearningRateDecay:
     """ 
     """
 
@@ -732,10 +741,25 @@ def eigen_encode_map(data, modes, photons, rand_encoding=False, density=True):
     return data_encode
 
 
-#TODO: useful 1 --> memristor implementation on data!
+#TODO: 1 --> memristor implementation
 def reservoir_map(data, modes, photons, pdesc, targets, temporal_num):
     """
     Applies reservoir channel to input data sequence
+
+        data: test or train data --> 3 dimensions
+
+        modes = 6
+
+        photons = 3
+
+        pdesc = {'theta_init': 0.1, 'MZI_target': [1, 2, 2], "tlen": 10}
+            Define a single instance of memristor element as example description
+
+        targets = [[1, 2, 3], [4, 5, 6]]
+            Define target modes of memristors
+
+        temporal_num = 1
+            Define temporal depth
     """
     # generate a Hadamard channel first
     hadamard_layer = BSArray(modes, photons, force=True)
@@ -747,7 +771,7 @@ def reservoir_map(data, modes, photons, pdesc, targets, temporal_num):
         print("Applying Hadamard layer")
         data = hadamard_layer.call(data)
 
-        # iterate over list of targets for resevoir layer
+        # iterate over list of targets for reservoir layer
         for tnum, target in enumerate(targets):
             continue
             # generate memristor element class
@@ -929,8 +953,10 @@ def entanglement_gen(dim, num=100, partition=0.5, embed_dim=None):
 
 
 if __name__ == '__main__':
-    pdesc = {'modes': 3, 'photons': 2}
+    # pdesc = {'modes': 3, 'photons': 2}
+    pdesc = {'theta_init': 0.1, 'MZI_target': [1, 2, 2], "tlen": 10}
     modes = 3
     photons = 2
-    print(number_states(modes, photons))
-    new_data = encode_map(data, modes, photons)
+    # print(number_states(modes, photons))
+    # new_data = eigen_encode_map(data, modes, photons)
+    q_mem = QMemristor(modes=modes, photons=photons, pdesc=pdesc, force=True)

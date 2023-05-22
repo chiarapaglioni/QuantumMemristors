@@ -2,24 +2,19 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import tensorflow as tf
-import math
-import numpy as np
+from keras import backend, activations, initializers
+from keras.layers import Layer
+from werkzeug.datastructures import K
 
-from scipy.special import comb
-from keras import optimizers
-from keras.layers import Input, Layer
-from keras.models import Model
-from keras import callbacks
-from keras import backend
-from datetime import datetime
-from qinfo.qinfo import haar_sample, dagger, multikron, dirsum
-from ucell.utility import *
-from ucell.operators import *
+from memristor.ucell.utility import *
 
 
 # For the love of god, please be quiet
 # tf.logging.set_verbosity(tf.logging.ERROR)
+
+''' 
+    The following classes have not been used in the code.
+'''
 
 
 class ReNormaliseLayer(Layer):
@@ -93,7 +88,7 @@ class ReNormaliseLayer(Layer):
 
 class ULayer(Layer):
     """
-    Subclass Keras because I'm a busy guy. Untitary layer using Clements 2016 decomposition, universal 
+    Subclass Keras because I'm a busy guy. Unitary layer using Clements 2016 decomposition, universal
     for single photon input. 
     """
 
@@ -145,7 +140,7 @@ class ULayer(Layer):
             (one instance per input).
         """
 
-        # define weight initialisers with very tight distribution - corresponds to an identity
+        # define weight initializers with very tight distribution - corresponds to an identity
         with tf.init_scope():
             diag_init = tf.initializers.RandomNormal(mean=0, stddev=0.01)
             theta_init = tf.initializers.RandomNormal(mean=np.pi, stddev=0.01)
@@ -186,7 +181,7 @@ class ULayer(Layer):
                     S = tf.constant(symmetric_map(
                         self.modes, pnum), dtype=tf.complex64)
                     # map to product state then use symmetric isometry to reduce to isomorphic subspace
-                    V = tf.matmul(S, tf.matmul(tf_multikron(self.unitary, pnum), tf.linalg.adjoint(S)))
+                    V = tf.matmul(S, tf.matmul(tf.tf_multikron(self.unitary, pnum), tf.linalg.adjoint(S)))
                     U = tf.linalg.LinearOperatorBlockDiag([U, tf.linalg.LinearOperatorFullMatrix(V)])
                 # convert unit
                 self.unitary = tf.convert_to_tensor(U.to_dense())
@@ -196,7 +191,7 @@ class ULayer(Layer):
                 S = tf.constant(symmetric_map(
                     self.modes, self.photons), dtype=tf.complex64)
                 # map to product state then use symmetric isometry to reduce to isomorphic subspace
-                self.unitary = tf.matmul(S, tf.matmul(tf_multikron(self.unitary, self.photons), tf.linalg.adjoint(S)))
+                self.unitary = tf.matmul(S, tf.matmul(tf.tf_multikron(self.unitary, self.photons), tf.linalg.adjoint(S)))
 
         # adds identity channels to operator - not clear what use I thought these would be
         # if self.pad is not None:
@@ -860,7 +855,7 @@ class NonLinearLayer(Layer):
             S = tf.constant(symmetric_map(
                 self.modes, self.photons), dtype=tf.complex64)
             # map to product state then use symmetric isometry to reduce to isomorphic subspace
-            self.unitary = tf.matmul(S, tf.matmul(tf_multikron(
+            self.unitary = tf.matmul(S, tf.matmul(tf.tf_multikron(
                 self.unitary, self.photons), tf.linalg.adjoint(S)))
 
         # call build method of super class

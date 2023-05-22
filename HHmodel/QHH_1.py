@@ -35,10 +35,3 @@ class QHH_1:
         Z_min = self.Zmin(Zk, n0)
         f = eps*(-4*Z_min * (Zk/Z_min)**(5/4) * alpha_n + 4*Zk*(alpha_n+beta_n))
         return f
-
-    # Update of the system
-    # TODO: implement update rule R from photonic quantum memristor
-    def r(self):
-        pass
-
-    

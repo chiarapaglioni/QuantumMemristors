@@ -20,7 +20,6 @@ if __name__ == "__main__":
     Cr = 10**(-6)
 
     # Impedance of the outgoing transmission line
-    # Zout = Z1
     Zout = 50
 
     # Activation variable values
@@ -39,8 +38,6 @@ if __name__ == "__main__":
     # GNa = max sodium conductance * m0^3 * h0
     ZNa[0] = 1 / (0.17 * (m0**3) * h0)
 
-    # w=10**1
-    # I0=1
     w = np.full((len(ts)), 10)
     I0 = np.full((len(ts)), 1)
     I0[:int(len(ts)/4)] = 0
@@ -53,8 +50,10 @@ if __name__ == "__main__":
     Vm = np.zeros(len(ts))
     Vm[0] = qhh.V(Zk[0], ZNa[0], ZL, Zout, I0[0], w[0], ts[0], Cc, Cr)
 
+    # Shape: (100000, 1)
+    print('Voltage Shape: ', Vm.shape)
+
     # Update of the system
-    # TODO: Change the implementation of the update to adapt it to the photonic memristor
     for i in range(len(ts)-1):
         t = ts[i]
 

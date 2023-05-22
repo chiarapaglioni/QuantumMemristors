@@ -1,6 +1,11 @@
 import numpy as np
 from scipy.linalg import block_diag
 
+'''
+    Class only used to implement the basic operators: 
+    Hadamard, CNOT, X gate, etc. 
+'''
+
 # Plancks constant
 pbar = 6.626070040e-34
 # reduced
