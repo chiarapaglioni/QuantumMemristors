@@ -79,7 +79,7 @@ if task == "witness":
 
 elif task == "HHmodel":
     # TODO: Apply Experimental Memristor to HH Model
-    print()
+    print(pdesc['MZI_target'])
 
 else:
 

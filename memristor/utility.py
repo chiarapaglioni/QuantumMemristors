@@ -54,6 +54,7 @@ class QMemristor(object):
         # save symmetric map for dilation to complete Fock space (much, much faster than permanents)
         self.S = symmetric_map(self.modes, self.photons)
         # build initial unitary array
+        # TODO: memristor call
         self.update(time_index=0)
         # build projector tensor for measure/prepare stage
         self.projector_build()
@@ -130,8 +131,6 @@ class QMemristor(object):
         """
         Method that applies memristor element to encoded quantum state. Takes as input a single quantum
         state sequence in density operator form
-
-            input_states = 3 dimensional array
         """
 
         # some basic data checking to catch annoying to track errors
@@ -151,18 +150,18 @@ class QMemristor(object):
             # (@ = matrix multiplication)
             # dagger = conjugate transpose or the Hermitian transpose of a matrix
             #        = taking the complex conjugate of each element and then transposing the matrix
+            #       NOTE --> The expectation value of the photon number corresponds to the average number of photons
+            #                that would be measured if one were to perform repeated measurements on the quantum state.
+            #                Mathematically, it is calculated as the expectation value of the number operator,
+            #                which is a Hermitian operator that counts the number of photons
+            #       Hence --> dagger(unitary) = n_in = input = expectation value of the photon number
             output_state = unitary @ time_input @ dagger(unitary)
-
-            # apply unitary transform as left hand operator
-            # left = np.einsum('ij,jl->il', unitary, time_input)u
-            # right hand operator
-            # out = np.einsum('il,lj->ij', left, dagger(unitary))
 
             # apply projection operators to input state
             # compute effect of  measurement projector on modes specified by photonic projectors
             left = np.einsum('ijk,kl->ijl', self.proj, output_state)
             # can skip adjoint calculation since projectors are all real diagonals (does that seem right?)
-            right = np.einsum('ijl,ilk->ijk', left, self.proj)  # TODO
+            right = np.einsum('ijl,ilk->ijk', left, self.proj)
             # collapse projector outcome sum into single array, taking of batch broadcasting rules
             out = np.sum(right, axis=0)
 
@@ -171,6 +170,7 @@ class QMemristor(object):
 
             if i + 1 < self.tlen:
                 # compute the average number of photons in measurement mode
+                # PHOTON COUNTER --> see figure of reservoir quantum computer
                 self.mem_states[i + 1] = np.real(
                     np.sum([np.trace(out @ self.proj[j, :, :]) * self.proj_photon[j] for j in range(len(self.proj))]))
 
@@ -178,7 +178,6 @@ class QMemristor(object):
                 self.mem_states[i + 1] *= 2 * np.pi / self.photons
 
                 # build next unitary operator in chain
-                # Memristive behavior --> builds new matrix based on the previous states
                 self.update(i + 1)
 
         # print(self.mem_states[-1])
@@ -188,17 +187,19 @@ class QMemristor(object):
     def update(self, time_index):
         """
         Updates state of internal network and rebuilds unitary with updated beam splitter values
+
+        This is the 2nd unitary matrix that is applied to the output of the memristor
         """
 
         # average of previous output
         theta = self.mem_states[time_index]
-        print('Theta: ', theta)
+        # print('Theta: ', theta)
         # np.sum(self.mem_states + self.pdesc['theta_init'])/len(self.mem_states)
 
         # modes to act on 
         self.targets = self.pdesc['MZI_target']
 
-        # define stateful unitary operator that applies current state of MZI to input 
+        # define stateful unitary operator that applies current state of MZI (Mach-Zehnder Interferometer) to input
         unitary = T(self.targets[0], self.targets[1], theta, 0, self.modes)
 
         # map to complete Fock space and save to unitary array
@@ -249,6 +250,7 @@ class BSArray:
             bm[3] = np.random.rand()
 
         # construct single photon unitary
+        # This is the 1st unitary matrix that is applied to the input encoded data
         self.unitary = clements_stitch(bms_spec, [1.0] * self.modes)
         # map unitary to multiphoton space if required
         if self.photons > 1:
@@ -741,7 +743,7 @@ def eigen_encode_map(data, modes, photons, rand_encoding=False, density=True):
     return data_encode
 
 
-#TODO: 1 --> memristor implementation
+# TODO: 1 --> reservoir implementation
 def reservoir_map(data, modes, photons, pdesc, targets, temporal_num):
     """
     Applies reservoir channel to input data sequence

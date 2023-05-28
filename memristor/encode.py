@@ -65,7 +65,7 @@ class QEncoder(object):
             print("Data normalisation requested: Computing")
             data /= np.max(data)
 
-        # separate map mathods for compartmentalisation
+        # separate map methods for compartmentalisation
         if method is "eigen":
             print("Applying Gellman basis eigenstate map")
             return self._eigen_map(data=data, **kwargs)

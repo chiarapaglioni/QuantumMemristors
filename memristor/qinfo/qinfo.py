@@ -2407,6 +2407,7 @@ def dirsum(arrayset, combination):
     return U
 
 
+# TODO: multikron implementatio n
 def multikron(A, r):
     """
     Computes the tensor power of A^\otimes r

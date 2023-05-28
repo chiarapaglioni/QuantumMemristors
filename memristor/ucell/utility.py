@@ -90,6 +90,7 @@ def index_gen(m, n, nmax):
     return tf.constant(indices, dtype=tf.int64)
 
 
+# TODO: memristor implementation!
 def T(m, n, theta, phi, nmax):
     r"""The Clements T matrix from Eq. 1 of Clements et al. (2016)"""
     mat = np.identity(nmax, dtype=np.complex128)
