@@ -1,6 +1,8 @@
 from qiskit import Aer, execute, QuantumCircuit, QuantumRegister, ClassicalRegister
-import numpy as np
 from qiskit.circuit.library import RYGate
+from scipy.integrate import quad
+import numpy as np
+
 
 """
     Simulation of dynamic simulation quantum memristor 
@@ -20,15 +22,17 @@ class IBMQSimulator:
         return cnts
 
 
-# TODO: implement gamma function based on paper
-def gamma():
-    # From Fig. 2 of the paper
-    return 0.2
+# TODO: check correct implementation of decay rate function
+def gamma(y0, w, ts):
+    # Based on Fig. 2 of the paper:
+    # y0 = 0.2 or 0.02
+    # w = 1
+    return y0 * (1 - np.sin(np.cos(w*ts)))
 
 
-# TODO: implement k function based on paper
-def k(time):
-    return 0+time
+# TODO: check correct implementation of k function
+def k(ts):
+    return (-(quad(gamma, 0, ts)))/2
 
 
 # # Time-steps
@@ -37,9 +41,8 @@ tmax = 1
 t = np.arange(0, tmax, eps)
 
 # Simulation parameters
-# theta = np.arccos(np.exp(k(t)))
 # TODO: determine correct parameters for the simulation
-theta = np.pi
+theta = np.arccos(np.exp(k(t)))
 theta1 = np.pi
 phi1 = np.pi
 lambda1 = np.pi
