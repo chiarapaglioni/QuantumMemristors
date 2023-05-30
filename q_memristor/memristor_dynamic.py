@@ -13,18 +13,20 @@ class IBMQSimulator:
         self.backend = backend
 
     def execute_circuit(self, circ, shots=1024):
-        simulator = Aer.get_backend(self.backend)
-        job = execute(circ, simulator, shots=shots)
+        sim = Aer.get_backend(self.backend)
+        job = execute(circ, sim, shots=shots)
         result = job.result()
-        counts = result.get_counts(circ)
-        return counts
+        cnts = result.get_counts(circ)
+        return cnts
 
 
+# TODO: implement gamma function based on paper
 def gamma():
     # From Fig. 2 of the paper
     return 0.2
 
 
+# TODO: implement k function based on paper
 def k(time):
     return 0+time
 
@@ -36,13 +38,14 @@ t = np.arange(0, tmax, eps)
 
 # Simulation parameters
 # theta = np.arccos(np.exp(k(t)))
+# TODO: determine correct parameters for the simulation
 theta = np.pi
 theta1 = np.pi
 phi1 = np.pi
 lambda1 = np.pi
-# theta2 = np.pi
-# phi2 = np.pi
-# lambda2 = np.pi
+theta2 = np.pi
+phi2 = np.pi
+lambda2 = np.pi
 
 # Initialize registers
 Q_env = QuantumRegister(len(t), 'Q_env')
@@ -82,6 +85,8 @@ print(circuit.decompose().draw())
 # Save image of final circuit
 circuit.decompose().draw('mpl', filename='dynamic_circuit.png')
 
-# Unused:
-# # Initialize the second qubit in the desired state (1 = index of second qbit)
-# # circuit.initialize(desired_state, 1)
+# Execute the circuit using the simulator
+simulator = IBMQSimulator()
+counts = simulator.execute_circuit(circuit)
+
+print('Simulator Measurement: ', counts)
