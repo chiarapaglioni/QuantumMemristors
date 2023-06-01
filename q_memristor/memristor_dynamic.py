@@ -1,11 +1,12 @@
 from qiskit import Aer, execute, QuantumCircuit, QuantumRegister, ClassicalRegister
+from qiskit.visualization import plot_bloch_multivector, plot_histogram
 from qiskit.circuit.library import RYGate
 from scipy.integrate import quad
 import numpy as np
 
 
 """
-    Simulation of dynamic simulation quantum memristor 
+    Simulation of dynamic quantum memristor 
     (Circuit shown in Fig. 3. of "Quantum Memristors with Quantum Computers")
 """
 
@@ -24,72 +25,101 @@ class IBMQSimulator:
 
 # TODO: check correct implementation of decay rate function
 def gamma(y0, w, ts):
-    # Based on Fig. 2 of the paper:
-    # y0 = 0.2 or 0.02
-    # w = 1
     return y0 * (1 - np.sin(np.cos(w*ts)))
 
 
 # TODO: check correct implementation of k function
-def k(ts):
-    return (-(quad(gamma, 0, ts)))/2
+def k(ts_next, ts):
+    integrand = lambda t_prime: gamma(y0, w, t_prime)
+    integral_result, _ = quad(integrand, ts, ts_next)
+    return -integral_result / 2
 
 
-# # Time-steps
+# Time-steps
 eps = 0.1
 tmax = 1
 t = np.arange(0, tmax, eps)
 
-# Simulation parameters
+# SIMULATION PARAMETERS
 # TODO: determine correct parameters for the simulation
-theta = np.arccos(np.exp(k(t)))
-theta1 = np.pi
-phi1 = np.pi
-lambda1 = np.pi
-theta2 = np.pi
-phi2 = np.pi
-lambda2 = np.pi
+# a and b are the parameters used in the pure state used to initialize the memristor
+#
+# Based on Fig. 2 of the paper:
+#   y0 = 0.2 or 0.02
+#   w = 1
+a = np.pi/8
+b = np.pi/5
+y0 = 0.2
+w = 1
 
-# Initialize registers
-Q_env = QuantumRegister(len(t), 'Q_env')
-Q_sys = QuantumRegister(1, 'Q_sys')
-C = ClassicalRegister(1, 'C')
+total_measurements = []
 
-# Create a quantum circuit with two qubits
-circuit = QuantumCircuit(Q_env, Q_sys, C)
-print(circuit.draw())
+for i in range(len(t)-1):
+    print('Time-step: ', t[i])
 
-evol_qc = QuantumCircuit(Q_env, Q_sys, name='evolution')
-# Implementation of controlled RY gate
-cry = RYGate(theta).control(1)
-# Apply cry gate to each timestep of the evolution
-for i in range(len(t)):
-    evol_qc.append(cry, [Q_sys, Q_env[len(t)-1-i]])
-    evol_qc.cnot(Q_env[len(t)-1-i], Q_sys)
-# print(evol_qc.draw())
+    theta = np.arccos(np.exp(k(t[i+1], t[i])))
+    print('Theta: ', theta)
 
-all_qubits = Q_env[:] + Q_sys[:]
-# print(len(all_qubits))
+    theta1 = np.pi
+    phi1 = np.pi
+    lambda1 = np.pi
+    theta2 = np.pi
+    phi2 = np.pi
+    lambda2 = np.pi
 
-# Apply gates to circuit
-# u = U3 gate
-circuit.u(theta1, phi1, lambda1, Q_sys)
-circuit.append(evol_qc.to_instruction(), all_qubits)
-circuit.u(theta1, phi1, lambda1, Q_sys)
+    # REGISTERS OF THE CIRCUIT
+    # Q_sys = memristor
+    Q_env = QuantumRegister(len(t), 'Q_env')
+    Q_sys = QuantumRegister(1, 'Q_sys')
+    C = ClassicalRegister(1, 'C')
 
-# # Measurement
-# # first parameter = 1 = qbit on which the measurement takes place
-# # second parameter = 2 = classical bit to place the measurement result in
-circuit.measure(Q_sys, C)
+    # Create the quantum circuit
+    circuit = QuantumCircuit(Q_env, Q_sys, C)
 
-print(circuit.draw())
-print(circuit.decompose().draw())
+    # INITIALIZATION PROCESS
+    circuit.u(theta1, phi1, lambda1, Q_sys)
 
-# Save image of final circuit
-circuit.decompose().draw('mpl', filename='dynamic_circuit.png')
+    # EVOLUTION PROCESS
+    evol_qc = QuantumCircuit(Q_env, Q_sys, name='evolution')
+    # Implementation of controlled-RY (cry) gate
+    cry = RYGate(theta).control(1)
+    # Apply cry gate to each timestep of the evolution
+    for i in range(len(t)):
+        evol_qc.append(cry, [Q_sys, Q_env[len(t)-1-i]])
+        evol_qc.cnot(Q_env[len(t)-1-i], Q_sys)
 
-# Execute the circuit using the simulator
-simulator = IBMQSimulator()
-counts = simulator.execute_circuit(circuit)
+    all_qbits = Q_env[:] + Q_sys[:]
+    circuit.append(evol_qc.to_instruction(), all_qbits)
 
-print('Simulator Measurement: ', counts)
+    # MEASUREMENT PROCESS
+    # first parameter = 1 = qbit on which the measurement takes place
+    # second parameter = 2 = classical bit to place the measurement result in
+    circuit.u(theta2, phi2, lambda2, Q_sys)
+    circuit.measure(Q_sys, C)
+
+    # UNCOMMENT TO DISPLAY CIRCUIT
+    # print(circuit.draw())
+    # print(circuit.decompose().draw())
+
+    # Save image of final circuit
+    circuit.decompose().draw('mpl', filename='dynamic_circuit.png')
+
+    # Execute the circuit using the simulator
+    simulator = IBMQSimulator()
+    counts = simulator.execute_circuit(circuit)
+
+    print('Simulator Measurement: ', counts)
+    # Example Simulator Measurement:  {'1': 16, '0': 1008}
+    # 1 --> obtained 16 times
+    # 0 --> obtained 1008 times
+
+    # EXPECTATION VALUES
+    num_shots = sum(counts.values())
+    expectation_values = {}
+
+    for register in counts:
+        expectation_values[register] = sum([int(bit) * counts[register] for bit in register]) / num_shots
+
+    print("Expectation values:", expectation_values, '\n')
+
+    # plot_histogram(counts)
