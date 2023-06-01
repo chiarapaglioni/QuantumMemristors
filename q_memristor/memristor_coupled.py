@@ -56,6 +56,7 @@ lambda1 = np.pi
 theta2 = np.pi
 phi2 = np.pi
 lambda2 = np.pi
+delta = np.pi
 
 pure_state = [np.cos(a), np.sin(a) * np.exp(1j * b)]
 zero_state = [1, 0]
@@ -91,12 +92,22 @@ for i in range(len(t) - 1):
     # Implementation of controlled-RY (cry) gate
     cry1 = RYGate(theta).control(1)
     cry2 = RYGate(theta).control(1)
-    # Apply cry gate to each timestep of the evolution
+    # Apply evolution process and interaction operator for each time-step
     for x in range(len(t)):
         evol_qc.append(cry1, [Q_sys1, Q_env1[len(t) - 1 - x]])
         evol_qc.append(cry2, [Q_sys2, Q_env2[x]])
         evol_qc.cnot(Q_env1[len(t) - 1 - x], Q_sys1)
         evol_qc.cnot(Q_sys2, Q_env2[x])
+        # The following are the operators that form the interaction operator
+        interaction_qc = QuantumCircuit(Q_sys1, Q_sys2, name='interaction')
+        interaction_qc.rx(np.pi/2, Q_sys1)
+        interaction_qc.rx(np.pi/2, Q_sys2)
+        interaction_qc.cnot(Q_sys1, Q_sys2)
+        interaction_qc.rz(2*delta, Q_sys2)
+        interaction_qc.cnot(Q_sys1, Q_sys2)
+        interaction_qc.rx(-np.pi/2, Q_sys1)
+        interaction_qc.rx(-np.pi/2, Q_sys2)
+        evol_qc.append(interaction_qc.to_instruction(), [Q_sys1, Q_sys2])
 
     all_qbits = Q_env1[:] + Q_sys1[:] + Q_sys2[:] + Q_env2[:]
     circuit.append(evol_qc.to_instruction(), all_qbits)
