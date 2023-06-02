@@ -13,7 +13,7 @@ class IBMQSimulator:
     def __init__(self, backend='qasm_simulator'):
         self.backend = backend
 
-    def execute_circuit(self, circ, shots=1000):
+    def execute_circuit(self, circ, shots=50000):
         # shots = 50000 (according to paper) --> reduced for computation purposes
         sim = Aer.get_backend(self.backend)
         job = execute(circ, sim, shots=shots)

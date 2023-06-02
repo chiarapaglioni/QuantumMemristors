@@ -22,13 +22,15 @@ class IBMQSimulator:
 
 
 # TODO: check correct implementation of decay rate function
-def gamma(y0, w, ts):
+def gamma(ts):
+    y0 = 0.2
+    w = 1
     return y0 * (1 - np.sin(np.cos(w * ts)))
 
 
 # TODO: check correct implementation of k function
 def k(ts_next, ts):
-    integrand = lambda t_prime: gamma(y0, w, t_prime)
+    integrand = lambda t_prime: gamma(t_prime)
     integral_result, _ = quad(integrand, ts, ts_next)
     return -integral_result / 2
 
