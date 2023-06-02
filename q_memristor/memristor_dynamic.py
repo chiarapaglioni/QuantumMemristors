@@ -92,33 +92,33 @@ for i in range(len(t) - 1):
     all_qbits = Q_env[:] + Q_sys[:]
     circuit.append(evol_qc.to_instruction(), all_qbits)
 
-    # MEASUREMENT PROCESS
-    # first parameter = 1 = qbit on which the measurement takes place
-    # second parameter = 2 = classical bit to place the measurement result in
-    circuit.u(theta2, phi2, lambda2, Q_sys)
-    circuit.measure(Q_sys, C)
+# MEASUREMENT PROCESS
+# first parameter = 1 = qbit on which the measurement takes place
+# second parameter = 2 = classical bit to place the measurement result in
+circuit.u(theta2, phi2, lambda2, Q_sys)
+circuit.measure(Q_sys, C)
 
-    # UNCOMMENT TO DISPLAY CIRCUIT
-    # print(circuit.draw())
-    # print(circuit.decompose().draw())
+# UNCOMMENT TO DISPLAY CIRCUIT
+# print(circuit.draw())
+# print(circuit.decompose().draw())
 
-    # Save image of final circuit
-    circuit.decompose().draw('mpl', filename='dynamic_circuit.png')
+# Save image of final circuit
+circuit.decompose().draw('mpl', filename='dynamic_circuit.png')
 
-    # Execute the circuit using the simulator
-    simulator = IBMQSimulator()
-    counts = simulator.execute_circuit(circuit)
+# Execute the circuit using the simulator
+simulator = IBMQSimulator()
+counts = simulator.execute_circuit(circuit)
 
-    print('Simulator Measurement: ', counts)
-    # Example Simulator Measurement:  {'1': 16, '0': 1008}
-    # 1 --> obtained 16 times
-    # 0 --> obtained 1008 times
+print('Simulator Measurement: ', counts)
+# Example Simulator Measurement:  {'1': 16, '0': 1008}
+# 1 --> obtained 16 times
+# 0 --> obtained 1008 times
 
-    # EXPECTATION VALUES
-    num_shots = sum(counts.values())
-    expectation_values = {}
+# EXPECTATION VALUES
+num_shots = sum(counts.values())
+expectation_values = {}
 
-    for register in counts:
-        expectation_values[register] = counts[register] / num_shots
+for register in counts:
+    expectation_values[register] = counts[register] / num_shots
 
-    print("Expectation values:", expectation_values, '\n')
+print("Expectation values:", expectation_values, '\n')
