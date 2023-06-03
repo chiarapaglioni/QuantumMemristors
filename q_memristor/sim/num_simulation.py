@@ -95,6 +95,11 @@ if __name__ == '__main__':
     w = 1
     y0 = 0.4
 
+    # two kinds of plots:
+    #   - 'iv' = IV plot
+    #   - 't' = time plot
+    plot_type = 't'
+
     pauli_low = [[0, 1],
                  [0, 0]]
     pauli_ris = [[0, 0],
@@ -104,9 +109,6 @@ if __name__ == '__main__':
 
     pure_state = np.array([np.cos(a), np.sin(a) * np.exp(1j * b)], dtype=complex)
 
-    iv_plt = iv_plot.IV_plot()
-    t_plt = time_plot.t_plot(len(t))
-
     V = []
     I = []
 
@@ -115,6 +117,9 @@ if __name__ == '__main__':
     I.append(gamma2(y0, w, t[0]) * V[0])
     print('V: ', V[0], ' at time: ', 0.0)
     print('I: ', I[0], ' at time: ', 0.0)
+
+    iv_plt = iv_plot.IVplot(V[0], I[0])
+    t_plt = time_plot.Tplot()
 
     for i in range(1, len(t)):
         V.append(V[0]*np.cos(w*t[i]))

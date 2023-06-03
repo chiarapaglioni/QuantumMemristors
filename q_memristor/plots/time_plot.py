@@ -1,11 +1,10 @@
 import matplotlib.pyplot as plt
 
 
-class t_plot:
-    def __init__(self, time_steps, ):
+class Tplot:
+    def __init__(self):
         self.fig, self.ax = plt.subplots(figsize=(10, 5))
         self.ax.axhline(0, color='black', linewidth=0.5)
-        self.ts = time_steps
         self.xs = []
         self.voltages = []
         self.currents = []
@@ -13,12 +12,12 @@ class t_plot:
         self.preferred_h = 500
         # self.voltage_scale_factor = 100
         # self.current_scale_factor = 100000
+        self.labels_displayed = False
+        self.ax.set_xlabel('Time (t)')
+        self.ax.set_ylabel('Current <I> & Voltage <V>')
+        self.ax.set_title('Time Plot')
 
     def update(self, t, v, i):
-        # TODO: implemented voltage and current normalisation
-        # v = v * self.voltage_scale_factor
-        # i = i * self.current_scale_factor
-
         self.xs.append(t)
         self.voltages.append(v)
         self.currents.append(i)
@@ -31,5 +30,9 @@ class t_plot:
         self.ax.set_xlim(0, t+1)
         self.ax.set_ylim(-0.4, 0.3)
         # self.ax.legend()
+
+        if not self.labels_displayed:
+            self.ax.legend()
+            self.labels_displayed = True
 
         plt.pause(0.001)
