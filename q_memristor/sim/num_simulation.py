@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.integrate import quad
 from sympy import symbols, diff
-from q_memristor.plots import iv_plot
+from q_memristor.plots import iv_plot, time_plot
 
 # Note that --> gamma has a sinusoidal time dependance
 # Sinusoidal time dependence refers to a quantity or phenomenon that varies with time in a sinusoidal or harmonic manner
@@ -105,6 +105,7 @@ if __name__ == '__main__':
     pure_state = np.array([np.cos(a), np.sin(a) * np.exp(1j * b)], dtype=complex)
 
     iv_plt = iv_plot.IV_plot()
+    t_plt = time_plot.t_plot(len(t))
 
     V = []
     I = []
@@ -119,6 +120,7 @@ if __name__ == '__main__':
         V.append(V[0]*np.cos(w*t[i]))
         I.append(gamma2(y0, w, t[i]) * V[i])
         iv_plt.update(V[i], I[i])
+        t_plt.update(t[i], V[i], I[i])
         print('V: ', V[i], ' at time: ', t[i])
         print('I: ', I[i], ' at time: ', t[i])
 
