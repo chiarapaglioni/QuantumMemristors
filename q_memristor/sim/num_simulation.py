@@ -1,15 +1,11 @@
 import numpy as np
 from scipy.integrate import quad
 from sympy import symbols, diff
-import matplotlib.pyplot as plt
+from q_memristor.plots import iv_plot
 
-"""
-    TODO: 
-        - Determine what is the exact output to be plotted (both for V and I)
-        - Compare the results of the numerical simulation with the one of the circuit
-"""
-
-
+# Note that --> gamma has a sinusoidal time dependance
+# Sinusoidal time dependence refers to a quantity or phenomenon that varies with time in a sinusoidal or harmonic manner
+# It is characterized by a periodic oscillation that follows a sine or cosine function.
 def gamma(ts):
     y0 = 0.4
     w = 1
@@ -90,7 +86,7 @@ def hamiltonian(h, w, p_z):
 
 if __name__ == '__main__':
     eps = 0.1
-    tmax = 1.2
+    tmax = 100.1
     t = np.arange(0, tmax, eps)
     a = np.pi/4
     b = np.pi/5
@@ -108,14 +104,29 @@ if __name__ == '__main__':
 
     pure_state = np.array([np.cos(a), np.sin(a) * np.exp(1j * b)], dtype=complex)
 
+    iv_plt = iv_plot.IV_plot()
+
     V = []
     I = []
 
-    for i in range(len(t)-1):
-        V.append(-(1/2)*np.sqrt((m*h*w)/2)*exp_value('Y', pure_state))
-        print('V: ', V[i], ' at time: ', t[i])
+    # Initialize V_0 and I_0
+    V.append(-(1 / 2) * np.sqrt((m * h * w) / 2) * exp_value('Y', pure_state))
+    I.append(gamma2(y0, w, t[0]) * V[0])
+    print('V: ', V[0], ' at time: ', 0.0)
+    print('I: ', I[0], ' at time: ', 0.0)
+
+    for i in range(1, len(t)):
+        V.append(V[0]*np.cos(w*t[i]))
         I.append(gamma2(y0, w, t[i]) * V[i])
+        iv_plt.update(V[i], I[i])
+        print('V: ', V[i], ' at time: ', t[i])
         print('I: ', I[i], ' at time: ', t[i])
+
+    V = V/V[0]
+    I = I/I[0]
+
+    print(V)
+    print(I)
 
     # for i in range(len(t)-1):
     #     g = gamma(t[i])
@@ -144,3 +155,14 @@ if __name__ == '__main__':
     #     print('\n'.join(['\t'.join([str(cell) for cell in row]) for row in out]))
     #     print(np.trace(out))
     #     print()
+
+    # plt.plot(t, V, color='red', label='Voltage')
+    # plt.plot(t, I, color='blue', label='Current')
+
+    # Customize the plot (optional)
+    # plt.title('Sine Wave')  # Set the plot title
+    # plt.xlabel('x')  # Set the x-axis label
+    # plt.ylabel('y')  # Set the y-axis label
+
+    # Display the plot
+    # plt.show()
