@@ -1,7 +1,7 @@
 from q_memristor.plots import iv_plot, time_plot
 from scipy.integrate import quad
 from sympy import symbols, diff
-from operators import *
+from q_memristor.numerical.operators import *
 import numpy as np
 
 # Questions:

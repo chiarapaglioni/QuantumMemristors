@@ -1,4 +1,4 @@
-from operators import *
+from q_memristor.numerical.operators import *
 from num_memristor import memristor
 from q_memristor.plots import iv_plot, time_plot
 import numpy as np
@@ -7,7 +7,7 @@ import numpy as np
 if __name__ == '__main__':
     # Time-steps
     eps = 0.1
-    tmax = 20.1
+    tmax = 100.1
     t = np.arange(0, tmax, eps)
 
     # Simulation parameters
