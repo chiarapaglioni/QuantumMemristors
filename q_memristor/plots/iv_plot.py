@@ -33,3 +33,6 @@ class IVplot:
         self.ax.axvline(0, color='black', linewidth=0.5)
         self.ax.plot(self.xs, self.ys, 'o', markersize=3)
         plt.pause(0.001)
+
+    def save_plot(self):
+        self.fig.savefig('iv_plot.png')

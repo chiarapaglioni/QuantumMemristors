@@ -7,7 +7,7 @@ import numpy as np
 if __name__ == '__main__':
     # Time-steps
     eps = 0.1
-    tmax = 100.1
+    tmax = 10.1
     t = np.arange(0, tmax, eps)
 
     # Simulation parameters
@@ -46,6 +46,9 @@ if __name__ == '__main__':
         t_plt.update(t[i], V[i], I[i])
         print('V: ', V[i], ' at time: ', t[i])
         print('I: ', I[i], ' at time: ', t[i])
+
+    iv_plt.save_plot()
+    t_plt.save_plot()
 
     V = V/V[0]
     I = I/I[0]

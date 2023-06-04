@@ -138,10 +138,15 @@ if __name__ == '__main__':
         print('p_2 Master Equation: ')
         print('\n'.join(['\t'.join([str(cell) for cell in row]) for row in p2_me]))
 
-        exp_pI = mem.exp_value(pI_me, pure_state)
-        exp_p2 = mem.exp_value(p2_me, pure_state)
-        print('Expectation Value pI: ', exp_pI)
-        print('Expectation Value pI: ', exp_p2)
+        # exp_pI = mem.exp_value(pI_me, pure_state)
+        # exp_p2 = mem.exp_value(p2_me, pure_state)
+        # Note: values of both master equations are the same because it's the same calculations with different equations
+        exp_pI = np.trace(pI_me)
+        exp_p2 = np.trace(p2_me)
+        print('Expectation Value pI density matrix: ', np.trace(pI_mat))
+        print('Expectation Value pI master equation: ', exp_pI)
+        print('Expectation Value p2 density matrix: ', np.trace(p2_mat))
+        print('Expectation Value p2 master equation: ', exp_p2)
         print()
 
         t_plt.update(t[i], exp_pI, exp_p2)

@@ -36,3 +36,6 @@ class Tplot:
             self.labels_displayed = True
 
         plt.pause(0.001)
+
+    def save_plot(self):
+        self.fig.savefig('time_plot.png')
