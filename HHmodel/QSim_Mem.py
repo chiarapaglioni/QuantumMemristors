@@ -47,13 +47,6 @@ if __name__ == "__main__":
     # Input current of the system
     I = np.multiply(I0, np.sin(np.multiply(w, ts)))
 
-    # Voltage
-    Vm = np.zeros(len(ts))
-    # Vm[0] = qhh.V(Zk[0], ZNa[0], ZL, Zout, I0[0], w[0], ts[0], Cc, Cr)
-
-    # Shape: (100000, 1)
-    print('Voltage Shape: ', Vm.shape)
-
     # Memristor simulation parameters
     a = np.pi/4
     b = np.pi/5
@@ -61,36 +54,45 @@ if __name__ == "__main__":
     h = 1
     w = 1
     y0 = 0.4
-    amplitude = 1
-    ang_freq = w                  # angular frequency = w
 
     mem = num_memristor.memristor(y0, w, h, m, a, b)
 
+    # Voltage
+    Vol = np.zeros(len(ts))
+    Vol[0] = mem.gamma(ts[0]) * I[0]
+
+    Vm = np.zeros(len(ts))
+    Vm[0] = qhh.V(Zk[0], ZNa[0], ZL, Zout, I0[0], w[0], ts[0], Cc, Cr)
+
+    # Shape: (100000, 1)
+    # print('Voltage Shape: ', Vm.shape)
+
     # Update of the system
-    for i in range(len(ts) - 1):
+    for i in range(len(ts)-1):
         t = ts[i]
 
-        Vm[i] = mem.gamma(t) * I[i]
+        Vol[i + 1] = mem.gamma(ts[i+1]) * I[i]
+
         # For now the potassium and sodium channels are not included in the update of the system
-        #
-        # k1 = qhh.k(t, eps, Zk[i], ZNa[i], ZL, Zout, I0[i], w[i], Cc, Cr, n0)
-        # q1 = qhh.q(t, eps, Zk[i], ZNa[i], ZL, Zout, I0[i], w[i], Cc, Cr, m0, h0)
-        #
-        # k2 = qhh.k(t + 0.5 * eps, eps, Zk[i] + 0.5 * k1, ZNa[i] + 0.5 * q1, ZL, Zout, I0[i], w[i], Cc, Cr, n0)
-        # q2 = qhh.q(t + 0.5 * eps, eps, Zk[i] + 0.5 * k1, ZNa[i] + 0.5 * q1, ZL, Zout, I0[i], w[i], Cc, Cr, m0, h0)
-        #
-        # k3 = qhh.k(t + 0.5 * eps, eps, Zk[i] + 0.5 * k2, ZNa[i] + 0.5 * q2, ZL, Zout, I0[i], w[i], Cc, Cr, n0)
-        # q3 = qhh.q(t + 0.5 * eps, eps, Zk[i] + 0.5 * k2, ZNa[i] + 0.5 * q2, ZL, Zout, I0[i], w[i], Cc, Cr, m0, h0)
-        #
-        # k4 = qhh.k(t + eps, eps, Zk[i] + k3, ZNa[i] + q3, ZL, Zout, I0[i], w[i], Cc, Cr, n0)
-        # q4 = qhh.q(t + eps, eps, Zk[i] + k3, ZNa[i] + q3, ZL, Zout, I0[i], w[i], Cc, Cr, m0, h0)
-        #
-        # # Update voltage of the potassium and sodium channels
-        # Zk[i + 1] = Zk[i] + (1 / 6) * (k1 + 2 * k2 + 2 * k3 + k4)
-        # ZNa[i + 1] = ZNa[i] + (1 / 6) * (q1 + 2 * q2 + 2 * q3 + q4)
-        #
-        # # Update voltage of the system
-        # Vm[i + 1] = qhh.V(Zk[i + 1], ZNa[i + 1], ZL, Zout, I0[i], w[i], ts[i + 1], Cc, Cr)
+
+        k1 = qhh.k(t, eps, Zk[i], ZNa[i], ZL, Zout, I0[i], w[i], Cc, Cr, n0)
+        q1 = qhh.q(t, eps, Zk[i], ZNa[i], ZL, Zout, I0[i], w[i], Cc, Cr, m0, h0)
+
+        k2 = qhh.k(t + 0.5 * eps, eps, Zk[i] + 0.5 * k1, ZNa[i] + 0.5 * q1, ZL, Zout, I0[i], w[i], Cc, Cr, n0)
+        q2 = qhh.q(t + 0.5 * eps, eps, Zk[i] + 0.5 * k1, ZNa[i] + 0.5 * q1, ZL, Zout, I0[i], w[i], Cc, Cr, m0, h0)
+
+        k3 = qhh.k(t + 0.5 * eps, eps, Zk[i] + 0.5 * k2, ZNa[i] + 0.5 * q2, ZL, Zout, I0[i], w[i], Cc, Cr, n0)
+        q3 = qhh.q(t + 0.5 * eps, eps, Zk[i] + 0.5 * k2, ZNa[i] + 0.5 * q2, ZL, Zout, I0[i], w[i], Cc, Cr, m0, h0)
+
+        k4 = qhh.k(t + eps, eps, Zk[i] + k3, ZNa[i] + q3, ZL, Zout, I0[i], w[i], Cc, Cr, n0)
+        q4 = qhh.q(t + eps, eps, Zk[i] + k3, ZNa[i] + q3, ZL, Zout, I0[i], w[i], Cc, Cr, m0, h0)
+
+        # Update voltage of the potassium and sodium channels
+        Zk[i + 1] = Zk[i] + (1 / 6) * (k1 + 2 * k2 + 2 * k3 + k4)
+        ZNa[i + 1] = ZNa[i] + (1 / 6) * (q1 + 2 * q2 + 2 * q3 + q4)
+
+        # Update voltage of the system
+        Vm[i + 1] = qhh.V(Zk[i + 1], ZNa[i + 1], ZL, Zout, I0[i], w[i], ts[i + 1], Cc, Cr)
 
     # Gk = 1.0 / Zk
     # GNa = 1.0 / ZNa
@@ -110,14 +112,16 @@ if __name__ == "__main__":
     # plt.ylabel('Voltage <V>')
 
     plt.subplot(2, 2, 3)
-    plt.plot(I, Vm, 'g')
+    plt.plot(I, Vol, 'g')
     plt.xlabel('I')
-    plt.ylabel('v')
-    plt.title('Hysteresis Plot')
+    plt.ylabel('V')
+    plt.title('Hysteresis Plot 1')
 
-    # plt.subplot(2, 2, 4)
-    # plt.plot(ts, GNa, 'y')
-    # plt.title("Sodium Conductance GNa")
+    plt.subplot(2, 2, 4)
+    plt.plot(I, Vm, 'y')
+    plt.xlabel('I')
+    plt.ylabel('Vm')
+    plt.title('Hysteresis Plot 2')
 
     plt.tight_layout()
     plt.savefig('HH_plot.png')
