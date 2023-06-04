@@ -52,17 +52,17 @@ if __name__ == "__main__":
     b = np.pi/5
     m = 1
     h = 1
-    w = 1
+    w_m = 1
     y0 = 0.4
 
-    mem = num_memristor.memristor(y0, w, h, m, a, b)
+    mem = num_memristor.memristor(y0, w_m, h, m, a, b)
 
     # Voltage
-    Vol = np.zeros(len(ts))
-    Vol[0] = mem.gamma(ts[0]) * I[0]
-
     Vm = np.zeros(len(ts))
     Vm[0] = qhh.V(Zk[0], ZNa[0], ZL, Zout, I0[0], w[0], ts[0], Cc, Cr)
+
+    Vol = np.zeros(len(ts))
+    Vol[0] = mem.gamma(ts[0]) * I[0]
 
     # Shape: (100000, 1)
     # print('Voltage Shape: ', Vm.shape)
@@ -99,25 +99,29 @@ if __name__ == "__main__":
 
     plt.figure(figsize=(15, 8))
 
-    plt.subplot(2, 2, 1)
+    plt.subplot(3, 2, 1)
     plt.plot(ts, I, 'b')
     plt.title("Input Current")
     plt.xlabel('Time')
     # plt.ylabel('Current <I>')
 
-    plt.subplot(2, 2, 2)
-    plt.plot(ts, Vm, 'r')
-    plt.title("Voltage")
+    plt.subplot(3, 2, 2)
+    plt.plot(ts, Vol, 'r')
+    plt.title("Voltage 1")
     plt.xlabel('Time')
-    # plt.ylabel('Voltage <V>')
 
-    plt.subplot(2, 2, 3)
+    plt.subplot(3, 2, 3)
+    plt.plot(ts, Vm, 'r')
+    plt.title("Voltage 2")
+    plt.xlabel('Time')
+
+    plt.subplot(3, 2, 4)
     plt.plot(I, Vol, 'g')
     plt.xlabel('I')
     plt.ylabel('V')
     plt.title('Hysteresis Plot 1')
 
-    plt.subplot(2, 2, 4)
+    plt.subplot(3, 2, 5)
     plt.plot(I, Vm, 'y')
     plt.xlabel('I')
     plt.ylabel('Vm')
