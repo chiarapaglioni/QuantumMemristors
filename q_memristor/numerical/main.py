@@ -31,7 +31,7 @@ if __name__ == '__main__':
     I = []
 
     # Initialize V_0 and I_0
-    V.append(-(1 / 2) * np.sqrt((m * h * w) / 2) * mem.exp_value(pauli_y, pure_state))
+    V.append(-(1 / 2) * np.sqrt((m * h * w) / 2) * mem.exp_value(pauli_y2, pure_state))
     I.append(mem.gamma(t[0]) * V[0])
     print('V: ', V[0], ' at time: ', 0.0)
     print('I: ', I[0], ' at time: ', 0.0)
