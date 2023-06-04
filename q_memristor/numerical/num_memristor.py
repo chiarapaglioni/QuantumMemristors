@@ -1,8 +1,11 @@
-import numpy as np
+from q_memristor.plots import iv_plot, time_plot
 from scipy.integrate import quad
 from sympy import symbols, diff
 from operators import *
+import numpy as np
 
+# Questions:
+# - When computing the exp_value at each iteration, do we multiply by a new pure state or always by the initial one?
 
 class memristor:
 
@@ -104,6 +107,8 @@ if __name__ == '__main__':
 
     mem = memristor(y0, w, h, m, a, b)
 
+    t_plt = time_plot.Tplot()
+
     pure_state = np.array([np.cos(a), np.sin(a) * np.exp(1j * b)], dtype=complex)
 
     for i in range(len(t)):
@@ -135,3 +140,5 @@ if __name__ == '__main__':
         print('Expectation Value pI: ', exp_pI)
         print('Expectation Value pI: ', exp_p2)
         print()
+
+        t_plt.update(t[i], exp_pI, exp_p2)
