@@ -7,7 +7,7 @@ import numpy as np
 if __name__ == '__main__':
     # Time-steps
     eps = 0.1
-    tmax = 100.1
+    tmax = 20.1
     t = np.arange(0, tmax, eps)
 
     # Simulation parameters
@@ -38,8 +38,8 @@ if __name__ == '__main__':
     I = []
 
     # Initialize V_0 and I_0
-    # V.append(-(1 / 2) * np.sqrt((m * h * w) / 2) * mem.exp_value(pauli_y2, pure_state))
-    V.append(amplitude * np.sin(ang_freq * t[0] + angle))
+    V.append(-(1 / 2) * np.sqrt((m * h * w) / 2) * mem.exp_value(pauli_y2, pure_state))
+    # V.append(amplitude * np.sin(ang_freq * t[0] + angle))
     I.append(mem.gamma(t[0]) * V[0])
     print('V: ', V[0], ' at time: ', 0.0)
     print('I: ', I[0], ' at time: ', 0.0)
@@ -49,10 +49,10 @@ if __name__ == '__main__':
 
     for i in range(1, len(t)):
         # I is evaluated correcty however there is an error with the update of the voltage V at each iteration
-        # TODO: fix update of V at each iteration
-        angle = np.arccos(np.exp(mem.k1(t[i])))
-        v_val = amplitude * np.sin(ang_freq * t[i] + angle)
+        # angle = np.arccos(np.exp(mem.k1(t[i])))
+        # v_val = amplitude * np.sin(ang_freq * t[i] + angle)
         # V.append(V[0]*np.cos(w*t[i]))
+        v_val = V[0]*np.sin(w*t[i])
         V.append(v_val)
         I.append(mem.gamma(t[i]) * V[i])
         iv_plt.update(V[i], I[i])
