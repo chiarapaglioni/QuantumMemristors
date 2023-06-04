@@ -35,19 +35,17 @@ class memristor:
         mat[1, 1] = 1-((np.cos(self.a)*np.exp(k))**2)
         return mat
 
-    def exp_value(self, pauli_matrix, state_vector):
+    def exp_value(self, matrix, state_vector):
         """Compute the expectation value of a Pauli matrix.
 
         Args:
-            pauli_matrix (str): The Pauli matrix to compute the expectation value for.
-                                Can be 'X', 'Y', or 'Z'.
+            matrix: matrix to compute the expectation value for.
             state_vector (numpy.ndarray): The quantum state vector.
 
         Returns:
             float: The expectation value.
         """
-        pauli_operator = pauli_matrix
-        expectation = np.vdot(state_vector, pauli_operator @ state_vector)
+        expectation = np.vdot(state_vector, matrix @ state_vector)
         return expectation.real
 
     def derivative(self, func):
@@ -107,3 +105,33 @@ if __name__ == '__main__':
     mem = memristor(y0, w, h, m, a, b)
 
     pure_state = np.array([np.cos(a), np.sin(a) * np.exp(1j * b)], dtype=complex)
+
+    for i in range(len(t)):
+        print('Timestep: ', t[i])
+
+        k_val = mem.k(t[i])
+        print('K: ', k_val)
+
+        pI_mat = mem.get_density_mat(k_val)
+        print('p_I Density Matrix: ')
+        print('\n'.join(['\t'.join([str(cell) for cell in row]) for row in pI_mat]))
+
+        # Master Equation
+        pI_me = mem.master_eq_I(t[i], pI_mat)
+        print('p_I Master Equation: ')
+        print('\n'.join(['\t'.join([str(cell) for cell in row]) for row in pI_me]))
+
+        p2_mat = mem.get_Schrödinger(t[i], pI_mat)
+        print('p_2 Schrödinger picture: ')
+        print('\n'.join(['\t'.join([str(cell) for cell in row]) for row in p2_mat]))
+
+        # Master Equation
+        p2_me = mem.master_eq_2(t[i], p2_mat)
+        print('p_2 Master Equation: ')
+        print('\n'.join(['\t'.join([str(cell) for cell in row]) for row in p2_me]))
+
+        exp_pI = mem.exp_value(pI_me, pure_state)
+        exp_p2 = mem.exp_value(p2_me, pure_state)
+        print('Expectation Value pI: ', exp_pI)
+        print('Expectation Value pI: ', exp_p2)
+        print()
