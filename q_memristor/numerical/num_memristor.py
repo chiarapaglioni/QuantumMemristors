@@ -24,8 +24,11 @@ class memristor:
         return self.y0 * (1 - np.sin(np.cos(self.w * ts)))
 
     def k(self, ts):
-        # TODO: adapt implementation of k to include both timesteps instead of 0
         result, _ = quad(self.gamma, 0, ts)
+        return -result / 2
+
+    def k(self, ts, ts_next):
+        result, _ = quad(self.gamma, ts, ts_next)
         return -result / 2
 
     # Computes the density matrix of a system at time t
@@ -111,10 +114,10 @@ if __name__ == '__main__':
 
     pure_state = np.array([np.cos(a), np.sin(a) * np.exp(1j * b)], dtype=complex)
 
-    for i in range(len(t)):
+    for i in range(len(t)-1):
         print('Timestep: ', t[i])
 
-        k_val = mem.k(t[i])
+        k_val = mem.k(t[i], t[i+1])
         print('K: ', k_val)
 
         pI_mat = mem.get_density_mat(k_val)
