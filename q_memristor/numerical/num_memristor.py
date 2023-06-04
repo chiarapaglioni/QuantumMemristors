@@ -23,7 +23,7 @@ class memristor:
     def gamma(self, ts):
         return self.y0 * (1 - np.sin(np.cos(self.w * ts)))
 
-    def k(self, ts):
+    def k1(self, ts):
         result, _ = quad(self.gamma, 0, ts)
         return -result / 2
 
@@ -53,6 +53,8 @@ class memristor:
         """
         expectation = np.vdot(state_vector, matrix @ state_vector)
         return expectation.real
+        # exp = np.dot(state_vector, matrix)
+        # return np.trace(exp)
 
     def derivative(self, func):
         # Define the variable
