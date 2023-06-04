@@ -1,4 +1,5 @@
 from qiskit import Aer, execute, QuantumCircuit, QuantumRegister, ClassicalRegister
+from scipy.integrate import quad
 import numpy as np
 from qiskit.circuit.library import RYGate
 
@@ -9,7 +10,7 @@ from qiskit.circuit.library import RYGate
 
 
 class IBMQSimulator:
-    def __init__(self, backend='qasm_simulator'):
+    def __init__(self, backend='qasm_simulator', ):
         self.backend = backend
 
     def execute_circuit(self, circ, shots=50000):
@@ -20,13 +21,29 @@ class IBMQSimulator:
         return cnts
 
 
+class memristor:
+    def __init__(self, y0, w):
+        self.y0 = y0
+        self.w = w
+
+    def gamma(self, ts):
+        return self.y0 * (1 - np.sin(np.cos(self.w * ts)))
+
+    def k(self, ts):
+        result, _ = quad(self.gamma, 0, ts)
+        return -result / 2
+
+
+# Execute the circuit using the simulator
+simulator = IBMQSimulator()
+mem = memristor()
+
 # Single time-step
 t = 0.2
 
-# Simulation parameters
-# theta = np.arccos(np.exp(k(t)))
 # TODO: determine correct parameters for the simulation
-theta = np.pi
+# Simulation parameters
+theta = np.arccos(np.exp(mem.k(t)))
 theta1 = np.pi
 phi1 = np.pi
 lambda1 = np.pi
@@ -65,8 +82,6 @@ print(circuit.decompose().draw())
 # Save image of final circuit
 circuit.draw('mpl', filename='1t_circuit.png')
 
-# Execute the circuit using the simulator
-simulator = IBMQSimulator()
 counts = simulator.execute_circuit(circuit)
 
 print('Simulator Measurement: ', counts)
