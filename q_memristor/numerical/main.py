@@ -1,13 +1,13 @@
 from q_memristor.numerical.operators import *
-from num_memristor import memristor
 from q_memristor.plots import iv_plot, time_plot
+from num_memristor import memristor
 import numpy as np
 
 
 if __name__ == '__main__':
     # Time-steps
     eps = 0.1
-    tmax = 100.1
+    tmax = 50.1
     t = np.arange(0, tmax, eps)
 
     # Simulation parameters
@@ -23,11 +23,6 @@ if __name__ == '__main__':
     mem = memristor(y0, w, h, m, a, b)
 
     angle = np.arccos(np.exp(mem.k1(0)))    # phase angle
-
-    # Plots types:
-    #   - 'iv' = IV plot
-    #   - 't' = time plot
-    plot_type = 't'
 
     pure_state = np.array([np.cos(a), np.sin(a) * np.exp(1j * b)], dtype=complex)
 
@@ -48,10 +43,8 @@ if __name__ == '__main__':
     t_plt = time_plot.Tplot()
 
     for i in range(1, len(t)):
-        # I is evaluated correcty however there is an error with the update of the voltage V at each iteration
         # angle = np.arccos(np.exp(mem.k1(t[i])))
         # v_val = amplitude * np.sin(ang_freq * t[i] + angle)
-        # V.append(V[0]*np.cos(w*t[i]))
         v_val = V[0]*np.sin(w*t[i])
         V.append(v_val)
         I.append(mem.gamma(t[i]) * V[i])
