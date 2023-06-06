@@ -21,7 +21,6 @@ class IBMQSimulator:
         cnts = result.get_counts(circ)
         return cnts
 
-
 # TODO: check correct implementation of decay rate function
 def gamma(y0, w, ts):
     return y0 * (1 - np.sin(np.cos(w * ts)))
