@@ -1,87 +1,87 @@
-from qiskit import Aer, execute, QuantumCircuit, QuantumRegister, ClassicalRegister
-from scipy.integrate import quad
+from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister
 import numpy as np
 from qiskit.circuit.library import RYGate
+from q_memristor.circuits.Simulator import IBMQSimulator
+from q_memristor.numerical.num_memristor import memristor
 
 """
     Simulation of single-time-step quantum memristor 
     (Circuit shown in Fig. 2. of "Quantum Memristors with Quantum Computers")
 """
 
+if __name__ == '__main__':
 
-class IBMQSimulator:
-    def __init__(self, backend='qasm_simulator', ):
-        self.backend = backend
+    backend_string = 'qasm_simulator'
+    shots = 50000
 
-    def execute_circuit(self, circ, shots=50000):
-        sim = Aer.get_backend(self.backend)
-        job = execute(circ, sim, shots=shots)
-        result = job.result()
-        cnts = result.get_counts(circ)
-        return cnts
+    simulator = IBMQSimulator(backend_string, shots)
 
+    a = np.pi / 4
+    b = np.pi / 5
+    y0 = 0.4
+    w = 1
+    m = 1
+    h = 1
 
-class memristor:
-    def __init__(self, y0, w):
-        self.y0 = y0
-        self.w = w
+    pure_state = [np.cos(a), np.sin(a) * np.exp(1j * b)]
 
-    def gamma(self, ts):
-        return self.y0 * (1 - np.sin(np.cos(self.w * ts)))
+    mem = memristor(y0, w, h, m, a, b)
 
-    def k(self, ts):
-        result, _ = quad(self.gamma, 0, ts)
-        return -result / 2
+    # Single time-step
+    t = 0.1
 
+    # Simulation parameters
+    theta = np.arccos(np.exp(mem.k1(t)))
 
-# Execute the circuit using the simulator
-simulator = IBMQSimulator()
-mem = memristor()
+    # Initialize registers
+    Q_env = QuantumRegister(1, 'Q_env')
+    Q_sys = QuantumRegister(1, 'Q_sys')
+    C = ClassicalRegister(1, 'C')
 
-# Single time-step
-t = 0.2
+    # Create a quantum circuit with two qubits
+    circuit = QuantumCircuit(Q_env, Q_sys, C)
+    # print(circuit.draw())
 
-# TODO: determine correct parameters for the simulation
-# Simulation parameters
-theta = np.arccos(np.exp(mem.k(t)))
-theta1 = np.pi
-phi1 = np.pi
-lambda1 = np.pi
-theta2 = np.pi
-phi2 = np.pi
-lambda2 = np.pi
+    # Implementation of controlled RY gate
+    cry = RYGate(theta).control(1)
 
-# Initialize registers
-Q_env = QuantumRegister(1, 'Q_env')
-Q_sys = QuantumRegister(1, 'Q_sys')
-C = ClassicalRegister(1, 'C')
+    # Apply gates to circuit
 
-# Create a quantum circuit with two qubits
-circuit = QuantumCircuit(Q_env, Q_sys, C)
-print(circuit.draw())
+    # INITIALIZATION
+    circuit.initialize(pure_state, Q_sys)
 
-# Implementation of controlled RY gate
-cry = RYGate(theta).control(1)
+    # EVOLUTION
+    circuit.append(cry, [Q_sys, Q_env])
+    circuit.cnot(Q_env, Q_sys)
 
-# Apply gates to circuit
-# u = U3 gate
-# cry = controlled RY gate
-circuit.u(theta1, phi1, lambda1, Q_sys)
-circuit.append(cry, [Q_sys, Q_env])
-circuit.cnot(Q_env, Q_sys)
-circuit.u(theta1, phi1, lambda1, Q_sys)
+    # MEASUREMENT
+    # Apply gates to perform measurement for Pauli-y
+    circuit.sdg(Q_sys)
+    circuit.h(Q_sys)
 
-# # Measurement
-# # first parameter = 1 = qbit on which the measurement takes place
-# # second parameter = 2 = classical bit to place the measurement result in
-circuit.measure(Q_sys, C)
+    # first parameter = 1 = qbit on which the measurement takes place
+    # second parameter = 2 = classical bit to place the measurement result in
+    circuit.measure(Q_sys, C)
 
-print(circuit.draw())
-print(circuit.decompose().draw())
+    print(circuit.draw())
+    print(circuit.decompose().draw())
 
-# Save image of final circuit
-circuit.draw('mpl', filename='1t_circuit.png')
+    # Save image of final circuit
+    circuit.draw('mpl', filename='1t_circuit.png')
 
-counts = simulator.execute_circuit(circuit)
+    counts, measurements, exp_value = simulator.execute_circuit(circuit)
 
-print('Simulator Measurement: ', counts)
+    print('Simulator Counts: ', counts)
+    print('Simulator Measurements: ', measurements)
+    print('Simulator Expectation Value: ', exp_value)
+
+    # Results for initial values at t = 0.1
+    #
+    # Simulator Expectation Value:  0.5888
+    # Voltage:  -0.2081722363813196
+    # Current:  -0.013426173789837254
+    V = -(1 / 2) * np.sqrt((m * h * w) / 2) * exp_value
+    I = mem.gamma(t) * V
+
+    print('Voltage: ', V)
+    print('Current: ', I)
