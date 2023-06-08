@@ -39,6 +39,11 @@ if __name__ == '__main__':
     # simulator = IBMQSimulator(backend_string, shots)
     simulator = IBMQSimulator(backend_string, shots)
 
+    V = []
+    I = []
+
+    mem = memristor(y0, w, h, m, a, b)
+
     # REGISTERS OF THE CIRCUIT
     # Q_sys = memristor
     Q_env = QuantumRegister(len(t), 'Q_env')
@@ -55,6 +60,7 @@ if __name__ == '__main__':
 
     # EVOLUTION PROCESS
     x = 0
+    expectation_values = []
     for i in range(len(t) - 1):
         print('Time-step: ', t[i])
 
@@ -72,79 +78,79 @@ if __name__ == '__main__':
         all_qbits = Q_env[:] + Q_sys[:]
         circuit.append(evol_qc, all_qbits)
 
-    # MEASUREMENT PROCESS
+        # MEASUREMENT PROCESS
 
-    # The measurement over Pauli-Y provides the values of the matrices that should be plugged into the equation of
-    # the voltage and current.
-    circuit.sdg(Q_sys)
-    circuit.h(Q_sys)
+        # The measurement over Pauli-Y provides the values of the matrices that should be plugged into the equation of
+        # the voltage and current.
+        circuit.sdg(Q_sys)
+        circuit.h(Q_sys)
 
-    # first parameter = 1 = qbit on which the measurement takes place
-    # second parameter = 2 = classical bit to place the measurement result in
-    circuit.measure(Q_sys, C)
+        # first parameter = 1 = qbit on which the measurement takes place
+        # second parameter = 2 = classical bit to place the measurement result in
+        circuit.measure(Q_sys, C)
 
-    # UNCOMMENT TO DISPLAY CIRCUIT
-    # print(circuit.draw())
-    # print(circuit.decompose().draw())
+        # UNCOMMENT TO DISPLAY CIRCUIT
+        # print(circuit.draw())
+        # print(circuit.decompose().draw())
 
-    # Save image of final circuit
-    circuit.decompose().draw('mpl', filename='dynamic_circuit.png')
+        # Save image of final circuit
+        # circuit.decompose().draw('mpl', filename='dynamic_circuit.png')
 
-    # Execute the circuit using the simulator
-    counts, measurements = simulator.execute_circuit(circuit)
+        # Execute the circuit using the simulator
+        counts, measurements, exp_value = simulator.execute_circuit(circuit)
 
-    print('Simulator Measurement: ', counts)
-    # Example Simulator Measurement:  {'1': 16, '0': 1008}
-    # 1 --> obtained 16 times
-    # 0 --> obtained 1008 times
-    # print('Measurements', measurements)
+        print('Simulator Measurement: ', counts)
+        # Example Simulator Measurement:  {'1': 16, '0': 1008}
+        # 1 --> obtained 16 times
+        # 0 --> obtained 1008 times
+        # print('Measurements', measurements)
+        expectation_values.append(exp_value)
+        print('Expectation Value: ', exp_value)
+
+        V.append(-(1 / 2) * np.sqrt((m * h * w) / 2) * expectation_values[i])
+        I.append(mem.gamma(t[i]) * V[i])
+        print('Voltage at time ', t[i], ' : ', V[i])
+        print('Current at time ', t[i], ' : ', I[i])
+        print()
 
     # EXPECTATION VALUES
-    y_eigenvalues = {'0': 1, '1': -1}
+    # y_eigenvalues = {'0': 1, '1': -1}
     # pauli_y = np.array([[0, -1j], [1j, 0]])
-
+    #
     # Calculate the expectation value for each shot
-    expectation_values = []
-    expectation_value = 0
-    count_1 = 0
-    count_0 = 0
-    shot_count = 0
-    for measurement in measurements:
-        # Get the eigenvalue corresponding to the measurement outcome
-        eigenvalue = y_eigenvalues[measurement]
+    # expectation_values = []
+    # expectation_value = 0
+    # count_1 = 0
+    # count_0 = 0
+    # shot_count = 0
+    # for measurement in measurements:
+    #     # Get the eigenvalue corresponding to the measurement outcome
+    #     eigenvalue = y_eigenvalues[measurement]
+    #
+    #     shot_count = shot_count + 1
+    #
+    #     if int(measurement) == 1:
+    #         count_1 = count_1 + 1
+    #     else:
+    #         count_0 = count_0 + 1
+    #
+    #     # Calculate the expectation value for the shot
+    #     # expectation_value = expectation_value - (eigenvalue * int(measurement) * counts[measurement] / shots)
+    #     expectation_value = np.abs(count_0 - count_1) / shot_count
+    #     # print('Exp: ', expectation_value)
+    #     expectation_values.append(expectation_value)
 
-        shot_count = shot_count + 1
+    # print('Expectation Values: ', expectation_values)
 
-        if int(measurement) == 1:
-            count_1 = count_1 + 1
-        else:
-            count_0 = count_0 + 1
-
-        # Calculate the expectation value for the shot
-        # expectation_value = expectation_value - (eigenvalue * int(measurement) * counts[measurement] / shots)
-        expectation_value = np.abs(count_0 - count_1) / shot_count
-        # print('Exp: ', expectation_value)
-        expectation_values.append(expectation_value)
-
-    print('Expectation Values: ', expectation_values)
-
-    V = []
-    I = []
-    ts = 0
-
-    mem = memristor(y0, w, h, m, a, b)
-    iv_plot = IVplot()
-    t_plot = Tplot()
+    # iv_plot = IVplot()
+    # t_plot = Tplot()
 
     # VOLTAGE CALCULATION
     # Initial results:
     # V0 = -0.3535533905932738
     # I0 = -0.011401302470989517
-    for i in range(len(expectation_values)):
-        ts = ts + 0.00002
-        V.append(-(1 / 2) * np.sqrt((m * h * w) / 2) * expectation_values[i])
-        I.append(mem.gamma(ts) * V[i])
-        iv_plot.update(V[i], I[i])
-        t_plot.update(ts, V[i], I[i])
+    # for i in range(len(expectation_values)):
+        # iv_plot.update(V[i], I[i])
+        # t_plot.update(ts, V[i], I[i])
         # print('Voltage at time ', ts, ' : ', V[i])
         # print('Current at time ', ts, ' : ', I[i])

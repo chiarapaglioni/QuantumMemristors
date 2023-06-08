@@ -11,7 +11,7 @@ def f(v0, gamma0, ts):
 if __name__ == '__main__':
     # Time-steps
     eps = 0.1
-    tmax = 50.1
+    tmax = 100.1
     t = np.arange(0, tmax, eps)
 
     # Simulation parameters

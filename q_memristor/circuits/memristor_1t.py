@@ -24,6 +24,7 @@ if __name__ == '__main__':
     h = 1
 
     pure_state = [np.cos(a), np.sin(a) * np.exp(1j * b)]
+    zero_state = [1, 0]
 
     mem = memristor(y0, w, h, m, a, b)
 
@@ -48,6 +49,7 @@ if __name__ == '__main__':
     # Apply gates to circuit
 
     # INITIALIZATION
+    circuit.initialize(zero_state, Q_env)
     circuit.initialize(pure_state, Q_sys)
 
     # EVOLUTION
@@ -63,7 +65,7 @@ if __name__ == '__main__':
     # second parameter = 2 = classical bit to place the measurement result in
     circuit.measure(Q_sys, C)
 
-    print(circuit.draw())
+    # print(circuit.draw())
     print(circuit.decompose().draw())
 
     # Save image of final circuit
