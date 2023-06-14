@@ -4,9 +4,13 @@ from qiskit.circuit.library import RYGate
 from q_memristor.circuits.Simulator import IBMQSimulator
 from q_memristor.numerical.num_memristor import memristor
 
+
 """
-    Simulation of single-time-step quantum memristor 
-    (Circuit shown in Fig. 2. of "Quantum Memristors with Quantum Computers")
+    Circuit simulation of single-time-step quantum memristor based on the article "Quantum Memristors with Quantum 
+    Computers" from Y.-M. Guo, F. Albarr ́an-Arriagada, H. Alaeian, E. Solano, and G. Alvarado Barrios. 
+
+    Author: Chiara Paglioni
+    Link to Article: https://link.aps.org/doi/10.1103/PhysRevApplied.18.024082  
 """
 
 if __name__ == '__main__':

@@ -10,236 +10,239 @@ from keras.models import Model
 
 from utility import *
 
-config = tf.compat.v1.ConfigProto(intra_op_parallelism_threads=12,
-                                  inter_op_parallelism_threads=12,
-                                  allow_soft_placement=True,
-                                  device_count={'CPU': 24})
+"""
+    Implementation of Quantum Neural Network with Quantum Reservoir using Photonic Quantum Memristors. 
+    
+    Author: QCmonk
+    Link to Repository: https://github.com/QCmonk/Qmemristor.git 
+"""
 
-session = tf.compat.v1.Session(config=config)
-# np.random.seed(1234)
+if __name__ == '__main__':
 
+    config = tf.compat.v1.ConfigProto(intra_op_parallelism_threads=12,
+                                      inter_op_parallelism_threads=12,
+                                      allow_soft_placement=True,
+                                      device_count={'CPU': 24})
 
-# ------------------------------------------------------------
-# Section 0: Program parameter definitions
-# ------------------------------------------------------------
-# define target modes of memristors
-targets = [[1, 2, 3], [4, 5, 6]]
-# define temporal depth
-temporal_num = 1
-# define total mode number
-modes = 6
-# define total number of single photons
-photons = 3
-# number of layers in neural network
-neural_layers = 1
-# number of logits in each layer
-layer_units = 30
-# number of epochs to train over
-epochs = 15
-# initial learning rate
-init_lr = 5e-2
-# batch size for learning
-batch_size = 5
-# learning rate polynomial
-lr_pow = 0
-# whether or not to train the network or just compile it
-train = True
-# whether to save reservoir mapping channel or recompute from scratch
-save = False
-# location and name of save file
-file_name = "MNIST_MAP.npz"  # "\\\\FREENAS\\Organon\\Research\\Papers\\QMemristor\\Code\\Archive\\MNIST_MAP.npz"
-# location and name of model save
-modelfile_name = ""  # "\\\\FREENAS\\Organon\\Research\\Archive\\ML\\models\\checkpoint"
-# task toggle ("witness" or "mnist")
-task = "mnist"
+    session = tf.compat.v1.Session(config=config)
+    # np.random.seed(1234)
 
-# ------------------------------------------------------------
-# Section 1: define program constants
-# ------------------------------------------------------------
-# define spatial depth 
-spatial_num = len(targets)
-# define a single instance of memristor element as example description
-pdesc = {'theta_init': 0.1, 'MZI_target': [1, 2, 2], "tlen": 10}
-# compute dimension of input network
-dim = comb(modes + photons - 1, photons, exact=True)
-# initialiser for dense network
-init = RandomUniform(minval=-1, maxval=1, seed=None)
+    # ------------------------------------------------------------
+    # Section 0: Program parameter definitions
+    # ------------------------------------------------------------
+    # define target modes of memristors
+    targets = [[1, 2, 3], [4, 5, 6]]
+    # define temporal depth
+    temporal_num = 1
+    # define total mode number
+    modes = 6
+    # define total number of single photons
+    photons = 3
+    # number of layers in neural network
+    neural_layers = 1
+    # number of logits in each layer
+    layer_units = 30
+    # number of epochs to train over
+    epochs = 15
+    # initial learning rate
+    init_lr = 5e-2
+    # batch size for learning
+    batch_size = 5
+    # learning rate polynomial
+    lr_pow = 0
+    # whether or not to train the network or just compile it
+    train = True
+    # whether to save reservoir mapping channel or recompute from scratch
+    save = False
+    # location and name of save file
+    file_name = "MNIST_MAP.npz"  # "\\\\FREENAS\\Organon\\Research\\Papers\\QMemristor\\Code\\Archive\\MNIST_MAP.npz"
+    # location and name of model save
+    modelfile_name = ""  # "\\\\FREENAS\\Organon\\Research\\Archive\\ML\\models\\checkpoint"
+    # task toggle ("witness" or "mnist")
+    task = "mnist"
 
-# ------------------------------------------------------------
-# Section 2: Apply reservoir computer layer to quantum data encoding
-# ------------------------------------------------------------
+    # ------------------------------------------------------------
+    # Section 1: define program constants
+    # ------------------------------------------------------------
+    # define spatial depth
+    spatial_num = len(targets)
+    # define a single instance of memristor element as example description
+    pdesc = {'theta_init': 0.1, 'MZI_target': [1, 2, 2], "tlen": 10}
+    # compute dimension of input network
+    dim = comb(modes + photons - 1, photons, exact=True)
+    # initialiser for dense network
+    init = RandomUniform(minval=-1, maxval=1, seed=None)
 
-if task == "witness":
-    # generate random entangled and seperable states
-    data_train, y_train, data_test, y_test = entanglement_gen(dim=10, num=5000, partition=0.5, embed_dim=dim)
+    # ------------------------------------------------------------
+    # Section 2: Apply reservoir computer layer to quantum data encoding
+    # ------------------------------------------------------------
 
-    data_train = reservoir_map(data_train, modes, photons, pdesc, targets, temporal_num)
-    data_test = reservoir_map(data_test, modes, photons, pdesc, targets, temporal_num)
+    if task == "witness":
+        # generate random entangled and seperable states
+        data_train, y_train, data_test, y_test = entanglement_gen(dim=10, num=5000, partition=0.5, embed_dim=dim)
 
-
-elif task == "HHmodel":
-    # TODO: Apply Experimental Memristor to HH Model
-    print(pdesc['MZI_target'])
-
-else:
-
-    # check if data has already been saved, else we will need to regenerate
-    if os.path.isfile(file_name):
-        # load saved data
-        save_data = np.load(file_name)
-
-        # extract all data
-        data_train = save_data["data_train"]
-        data_test = save_data["data_test"]
-        y_train = save_data["y_train"]
-        y_test = save_data["y_test"]
-
-    else:
-
-        # load MNIST data
-        (x_train, y_train), (x_test, y_test) = tf.keras.datasets.mnist.load_data()
-
-        # Shape: (60000, 28, 28)
-        #
-        # assert x_train.shape == (60000, 28, 28)
-        # assert x_test.shape == (10000, 28, 28)
-        # assert y_train.shape == (60000,)
-        # assert y_test.shape == (10000,)
-        #
-        # 60,000 28x28 grayscale images of the 10 digits
-        print('Initial Shape 1: ', x_train.shape)
-
-        x_train, y_train = filter_36(x_train, y_train)
-        x_test, y_test = filter_36(x_test, y_test)
-
-        # Shape: (18012, 28, 28)
-        print('Shape after filter36: ', x_train.shape)
-
-        # add channel axis (tensorflow being lame)
-        x_train = x_train[..., tf.newaxis]
-        x_test = x_test[..., tf.newaxis]
-
-        # downsample for easy initial training
-        data_train = np.squeeze(tf.image.resize(x_train, (14, 14)).numpy())[:, 1:-1, 2:-2]
-        data_test = np.squeeze(tf.image.resize(x_test, (14, 14)).numpy())[:, 1:-1, 2:-2]
-        # data_train[:,-1,:] = data_test[:,-1,:] = 1.0
-
-        # Shape: (18012, 12, 10)
-        print('Shape after sqeeze: ', data_train.shape)
-
-        # remove conflicting training items
-        data_train, y_train = remove_contradicting(data_train, y_train)
-        data_test, y_test = remove_contradicting(data_test, y_test)
-
-        # apply encoding of classical data to quantum state space
-        encoder = QEncoder(modes=modes, photons=photons, density=True)
-        data_train = encoder.encode(data=data_train, method="amplitude", normalise=True)
-        data_test = encoder.encode(data=data_test, method="amplitude", normalise=True)
-
-        # data_train = eigen_encode_map(data_train, modes, photons)
-        # data_test = eigen_encode_map(data_test, modes, photons)
-
-        # Shape: (18012, 10, 56, 56)
-        print('Shape after quantum encoding: ', data_train.shape)
-
-        # pass through reservoir
-        # TODO: 2 --> memristor is applied to data
         data_train = reservoir_map(data_train, modes, photons, pdesc, targets, temporal_num)
         data_test = reservoir_map(data_test, modes, photons, pdesc, targets, temporal_num)
 
-        # Shape: (18012, 56, 56)
-        print('Shape after reservoir: ', data_train.shape)
+    else:
 
-        # save this mapped data so we don't have to recompute
-        if save:
-            np.savez(file_name, data_train=data_train,
-                     data_test=data_test,
-                     y_train=y_train,
-                     y_test=y_test)
+        # check if data has already been saved, else we will need to regenerate
+        if os.path.isfile(file_name):
+            # load saved data
+            save_data = np.load(file_name)
 
-        data_train = data_train[:1000]
-        data_test = data_test[:1000]
-        y_train = y_train[:1000]
-        y_test = y_test[:1000]
+            # extract all data
+            data_train = save_data["data_train"]
+            data_test = save_data["data_test"]
+            y_train = save_data["y_train"]
+            y_test = save_data["y_test"]
 
-        # Shape: (1000, 56, 56)
-        print('Final shape: ', data_train.shape)
+        else:
 
-# ------------------------------------------------------------
-# Section 3: Define network topology
-# ------------------------------------------------------------
+            # load MNIST data
+            (x_train, y_train), (x_test, y_test) = tf.keras.datasets.mnist.load_data()
 
-# define input layer of network, no longer a time sequence to be considered
-input_state = Input(batch_shape=[None, dim, dim], dtype=tf.complex64, name="state_input")
+            # Shape: (60000, 28, 28)
+            #
+            # assert x_train.shape == (60000, 28, 28)
+            # assert x_test.shape == (10000, 28, 28)
+            # assert y_train.shape == (60000,)
+            # assert y_test.shape == (10000,)
+            #
+            # 60,000 28x28 grayscale images of the 10 digits
+            print('Initial Shape 1: ', x_train.shape)
 
-# extract classical output state of resevoir
-# output = ULayer(modes, photons, force=True)(input_state)
-output = MeasureLayer(modes, photons, force=True)(input_state)
-# feed this into a small feedforward network
+            x_train, y_train = filter_36(x_train, y_train)
+            x_test, y_test = filter_36(x_test, y_test)
 
-output = Dense(units=20)(output)
-# output = ReLU(negative_slope=0.1, threshold=0.0)(output)
-output = Dense(units=20)(output)
-# output = ReLU(negative_slope=0.01, threshold=0.0)(output)
-output = Dense(units=3, activation="softmax", use_bias=True)(output)
+            # Shape: (18012, 28, 28)
+            print('Shape after filter36: ', x_train.shape)
 
-# define standard optimiser
-opt = optimizers.Adam(learning_rate=init_lr)
+            # add channel axis (tensorflow being lame)
+            x_train = x_train[..., tf.newaxis]
+            x_test = x_test[..., tf.newaxis]
 
-# define loss function
-loss = tf.keras.losses.CategoricalCrossentropy(
-    from_logits=False,
-    label_smoothing=0,
-    reduction="auto",
-    name="categorical_crossentropy")
+            # downsample for easy initial training
+            data_train = np.squeeze(tf.image.resize(x_train, (14, 14)).numpy())[:, 1:-1, 2:-2]
+            data_test = np.squeeze(tf.image.resize(x_test, (14, 14)).numpy())[:, 1:-1, 2:-2]
+            # data_train[:,-1,:] = data_test[:,-1,:] = 1.0
 
-# define the model
-model = Model(inputs=input_state, outputs=output, name="Optical_Resevoir_Compute_Network")
+            # Shape: (18012, 12, 10)
+            print('Shape after sqeeze: ', data_train.shape)
 
-# ------------------------------------------------------------
-# Section 4: Model compilation and training
-# ------------------------------------------------------------
+            # remove conflicting training items
+            data_train, y_train = remove_contradicting(data_train, y_train)
+            data_test, y_test = remove_contradicting(data_test, y_test)
 
-# compile it using probability fidelity
-model.compile(optimizer=opt,
-              loss=loss,
-              metrics=["accuracy"])
+            # apply encoding of classical data to quantum state space
+            encoder = QEncoder(modes=modes, photons=photons, density=True)
+            data_train = encoder.encode(data=data_train, method="amplitude", normalise=True)
+            data_test = encoder.encode(data=data_test, method="amplitude", normalise=True)
 
-# setup callbacks
-# name = datetime.now().strftime("%Y%m%d_%H%M%S")
-# logdir = "C:\\Users\\Joshua\\Projects\\Research\\Archive\\Logs\\fit\\"
-# tensorboard_callback = TensorBoard(log_dir=logdir+name, write_graph=True)
-schedule = PolynomialDecay(maxEpochs=epochs, initAlpha=init_lr, power=lr_pow)
-lr_callback = tf.keras.callbacks.LearningRateScheduler(schedule)
+            # data_train = eigen_encode_map(data_train, modes, photons)
+            # data_test = eigen_encode_map(data_test, modes, photons)
 
-model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
-    save_weights_only=True,
-    filepath=modelfile_name,
-    save_freq="epoch",
-    monitor='val_accuracy',
-    mode='max',
-    save_best_only=True)
+            # Shape: (18012, 10, 56, 56)
+            print('Shape after quantum encoding: ', data_train.shape)
 
-# map integer labels to 0,1,2 instead of 0,3,8
-y_train = integer_remap(y_train, [[3, 1], [8, 2]])
-y_test = integer_remap(y_test, [[3, 1], [8, 2]])
+            # pass through reservoir
+            # TODO: 2 --> memristor is applied to data
+            data_train = reservoir_map(data_train, modes, photons, pdesc, targets, temporal_num)
+            data_test = reservoir_map(data_test, modes, photons, pdesc, targets, temporal_num)
 
-# output model summary for visual checks
-model.summary()
-label_train = keras.utils.to_categorical(y_train, 3)
-label_test = keras.utils.to_categorical(y_test, 3)
+            # Shape: (18012, 56, 56)
+            print('Shape after reservoir: ', data_train.shape)
 
-# train model if flag is set
-if train:
-    model.fit(x=data_train,
-              y=label_train,
-              epochs=epochs,
-              steps_per_epoch=len(data_train) // batch_size,
-              verbose=1,
-              validation_data=(data_test, label_test),
-              validation_steps=1,
-              callbacks=[lr_callback])  # model_checkpoint_callback,
+            # save this mapped data so we don't have to recompute
+            if save:
+                np.savez(file_name, data_train=data_train,
+                         data_test=data_test,
+                         y_train=y_train,
+                         y_test=y_test)
 
-    cnn_results = model.evaluate(data_test, label_test)
+            data_train = data_train[:1000]
+            data_test = data_test[:1000]
+            y_train = y_train[:1000]
+            y_test = y_test[:1000]
 
-print(y_test[:10])
+            # Shape: (1000, 56, 56)
+            print('Final shape: ', data_train.shape)
+
+    # ------------------------------------------------------------
+    # Section 3: Define network topology
+    # ------------------------------------------------------------
+
+    # define input layer of network, no longer a time sequence to be considered
+    input_state = Input(batch_shape=[None, dim, dim], dtype=tf.complex64, name="state_input")
+
+    # extract classical output state of reservoir
+    # output = ULayer(modes, photons, force=True)(input_state)
+    output = MeasureLayer(modes, photons, force=True)(input_state)
+    # feed this into a small feedforward network
+
+    output = Dense(units=20)(output)
+    # output = ReLU(negative_slope=0.1, threshold=0.0)(output)
+    output = Dense(units=20)(output)
+    # output = ReLU(negative_slope=0.01, threshold=0.0)(output)
+    output = Dense(units=3, activation="softmax", use_bias=True)(output)
+
+    # define standard optimiser
+    opt = optimizers.Adam(learning_rate=init_lr)
+
+    # define loss function
+    loss = tf.keras.losses.CategoricalCrossentropy(
+        from_logits=False,
+        label_smoothing=0,
+        reduction="auto",
+        name="categorical_crossentropy")
+
+    # define the model
+    model = Model(inputs=input_state, outputs=output, name="Optical_Reservoir_Compute_Network")
+
+    # ------------------------------------------------------------
+    # Section 4: Model compilation and training
+    # ------------------------------------------------------------
+
+    # compile it using probability fidelity
+    model.compile(optimizer=opt,
+                  loss=loss,
+                  metrics=["accuracy"])
+
+    # setup callbacks
+    # name = datetime.now().strftime("%Y%m%d_%H%M%S")
+    # logdir = "C:\\Users\\Joshua\\Projects\\Research\\Archive\\Logs\\fit\\"
+    # tensorboard_callback = TensorBoard(log_dir=logdir+name, write_graph=True)
+    schedule = PolynomialDecay(maxEpochs=epochs, initAlpha=init_lr, power=lr_pow)
+    lr_callback = tf.keras.callbacks.LearningRateScheduler(schedule)
+
+    model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
+        save_weights_only=True,
+        filepath=modelfile_name,
+        save_freq="epoch",
+        monitor='val_accuracy',
+        mode='max',
+        save_best_only=True)
+
+    # map integer labels to 0,1,2 instead of 0,3,8
+    y_train = integer_remap(y_train, [[3, 1], [8, 2]])
+    y_test = integer_remap(y_test, [[3, 1], [8, 2]])
+
+    # output model summary for visual checks
+    model.summary()
+    label_train = keras.utils.to_categorical(y_train, 3)
+    label_test = keras.utils.to_categorical(y_test, 3)
+
+    # train model if flag is set
+    if train:
+        model.fit(x=data_train,
+                  y=label_train,
+                  epochs=epochs,
+                  steps_per_epoch=len(data_train) // batch_size,
+                  verbose=1,
+                  validation_data=(data_test, label_test),
+                  validation_steps=1,
+                  callbacks=[lr_callback])  # model_checkpoint_callback,
+
+        cnn_results = model.evaluate(data_test, label_test)
+
+    print(y_test[:10])

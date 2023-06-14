@@ -25,7 +25,7 @@ if __name__ == '__main__':
     m = 1
     h = 1
     backend_string = 'qasm_simulator'
-    shots = 50000
+    shots = 5
 
     pure_state = [np.cos(a), np.sin(a) * np.exp(1j * b)]
 
@@ -35,8 +35,8 @@ if __name__ == '__main__':
     iv_plot = IVplot()
     t_plot = Tplot()
 
-    eps = 0.1
-    tmax = 1.1
+    eps = 1
+    tmax = 20
     t = np.arange(0, tmax, eps)
 
     V = []
@@ -67,7 +67,7 @@ if __name__ == '__main__':
 
         # EVOLUTION
         x = 0
-        for j in range(n):
+        for j in range(n-1):
             if n == 1:
                 theta = np.arccos(np.exp(mem.k1(t[j])))
             else:
@@ -128,3 +128,6 @@ if __name__ == '__main__':
         print('Voltage: ', v_val)
         print('Current: ', i_val)
         print()
+
+    iv_plot.save_plot()
+    t_plot.save_plot()

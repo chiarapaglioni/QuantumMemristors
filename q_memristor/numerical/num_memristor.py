@@ -4,8 +4,18 @@ from sympy import symbols, diff
 from q_memristor.numerical.operators import *
 import numpy as np
 
+
+"""
+    Numerical Implementation of Quantum Memristive Dynamics based on the article "Quantum Memristors with Quantum 
+    Computers" from Y.-M. Guo, F. Albarr ́an-Arriagada, H. Alaeian, E. Solano, and G. Alvarado Barrios. 
+
+    Author: Chiara Paglioni
+    Link to Article: https://link.aps.org/doi/10.1103/PhysRevApplied.18.024082  
+"""
+
 # Questions:
 # - When computing the exp_value at each iteration, do we multiply by a new pure state or always by the initial one?
+
 
 class memristor:
 

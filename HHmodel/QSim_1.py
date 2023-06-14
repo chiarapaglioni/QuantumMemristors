@@ -4,7 +4,10 @@ import matplotlib.pyplot as plt
 
 
 """
-    Simulation of Quantized three-ion-channel Hodgkin-Huxley model
+    Simulation of Quantized single-ion-channel Hodgkin-Huxley model
+    
+    Author: Chiara Paglioni
+    Link to Article: https://link.aps.org/doi/10.1103/PhysRevApplied.12.014037 
 """
 if __name__ == "__main__":
     qhh = QHH_1()

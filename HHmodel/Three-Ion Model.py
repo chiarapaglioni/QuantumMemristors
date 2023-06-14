@@ -2,11 +2,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.integrate import odeint
 
+"""
+    Implementation of three-ion-channel Hodgkin-Huxley model
+    
+    Authors: Tasio Gonzalez-Raya, Enrique Solano, and Mikel Sanz
+    Link to Article: https://doi.org/10.22331/q-2020-01-20-224
+"""
+
 
 class HHModel:
-    """
-        Implementation of three-ion-channel Hodgkin-Huxley model
-    """
 
     def __init__(self, gbar_K=36, gbar_Na=120, gbar_L=0.3, V_K=-12, V_Na=115, V_L=10.613, C_m=1.0):
         """ Set the constants for the model; the default values are taken from the original paper """

@@ -1,11 +1,15 @@
 import numpy as np
 
-
-class QHH_1:
-    """
+"""
     Implementation of Quantized single-ion-channel Hodgkin-Huxley model
     (Only potassium channel (K) is considered)
-    """
+    
+    Author: Chiara Paglioni
+    Link to Article: https://link.aps.org/doi/10.1103/PhysRevApplied.12.014037
+"""
+
+
+class QHH_1:
 
     def __init__(self):
         pass

@@ -4,8 +4,11 @@ import matplotlib.pyplot as plt
 from q_memristor.numerical import num_memristor
 
 """
-    Simulation of Quantized three-ion-channel Hodgkin-Huxley model with new memristor
+    Comparison of Quantized three-ion-channel Hodgkin-Huxley model with new Quantum Memristor
+    
+    Author: Chiara Paglioni
 """
+
 if __name__ == "__main__":
     qhh = QHH_3()
 

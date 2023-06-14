@@ -1,5 +1,11 @@
 import matplotlib.pyplot as plt
 
+"""
+    Basic implementation of time plot of Voltage (V) and Current (I) over time
+
+    Author: Chiara Paglioni
+"""
+
 
 class Tplot:
     def __init__(self):
@@ -24,12 +30,11 @@ class Tplot:
         # Uncomment the next line if we want to see only one dot at each update
         # self.ax.cla()
         self.ax.axhline(0, color='black', linewidth=0.5)
-        self.ax.plot(self.xs, self.voltages, 'bo-', markersize=3, label='Voltage')
-        self.ax.plot(self.xs, self.currents, 'ro-', markersize=3, label='Current')
+        self.ax.plot(self.xs, self.voltages, 'bo-', markersize=1, label='Voltage')
+        self.ax.plot(self.xs, self.currents, 'ro-', markersize=1, label='Current')
 
         self.ax.set_xlim(0, t+1)
-        self.ax.set_ylim(-0.4, 0.3)
-        # self.ax.legend()
+        self.ax.set_ylim(-4, 3)
 
         if not self.labels_displayed:
             self.ax.legend()

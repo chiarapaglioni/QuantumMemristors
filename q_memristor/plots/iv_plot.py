@@ -1,13 +1,17 @@
 import matplotlib.pyplot as plt
 
+"""
+    Basic implementation of IV-Plot 
+
+    Author: Chiara Paglioni
+"""
+
 
 class IVplot:
     def __init__(self, v0, i0):
         self.fig, self.ax = plt.subplots(figsize=(6, 5))
         self.ax.set_xlim(-3.5, 3.5)
         self.ax.set_ylim(-1.0, 1.0)
-        # self.ax.set_xlim(-0.2, 0.2)
-        # self.ax.set_ylim(-0.2, 0.2)
         self.ax.axhline(0, color='black', linewidth=0.5)
         self.ax.axvline(0, color='black', linewidth=0.5)
         self.v0 = v0
@@ -31,11 +35,9 @@ class IVplot:
         # self.ax.cla()
         self.ax.set_xlim(-3.5, 3.5)
         self.ax.set_ylim(-1.0, 1.0)
-        # self.ax.set_xlim(-0.2, 0.2)
-        # self.ax.set_ylim(-0.2, 0.2)
         self.ax.axhline(0, color='black', linewidth=0.5)
         self.ax.axvline(0, color='black', linewidth=0.5)
-        self.ax.plot(self.xs, self.ys, 'o', markersize=3)
+        self.ax.plot(self.xs, self.ys, 'o', markersize=1)
         plt.pause(0.001)
 
     def save_plot(self):

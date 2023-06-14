@@ -3,6 +3,14 @@ from q_memristor.plots import iv_plot, time_plot
 from num_memristor import memristor
 import numpy as np
 
+"""
+    Simulation of Quantum Memristive Dynamics based on the article "Quantum Memristors with Quantum 
+    Computers" from Y.-M. Guo, F. Albarr ́an-Arriagada, H. Alaeian, E. Solano, and G. Alvarado Barrios. 
+
+    Author: Chiara Paglioni
+    Link to Article: https://link.aps.org/doi/10.1103/PhysRevApplied.18.024082  
+"""
+
 
 def f(v0, gamma0, ts):
     return v0+(gamma0*ts)
@@ -11,7 +19,7 @@ def f(v0, gamma0, ts):
 if __name__ == '__main__':
     # Time-steps
     eps = 0.1
-    tmax = 100.1
+    tmax = 20.1
     t = np.arange(0, tmax, eps)
 
     # Simulation parameters

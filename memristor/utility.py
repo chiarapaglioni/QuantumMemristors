@@ -204,6 +204,7 @@ class QMemristor(object):
 
         # map to complete Fock space and save to unitary array
         self.unitary_array[time_index, :, :] = self.S @ multikron(unitary, self.photons) @ np.transpose(self.S)
+        # print('Unitary Array: ', self.unitary_array[time_index, :, :])
 
 
 class BSArray:

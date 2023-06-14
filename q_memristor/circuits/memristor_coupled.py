@@ -4,8 +4,11 @@ from scipy.integrate import quad
 import numpy as np
 
 """
-    Simulation of circuit simulating two coupled memristors 
-    (Circuit shown in Fig. 5. and Fig. 6. of "Quantum Memristors with Quantum Computers")
+    Circuit simulation of two coupled memristors based on the article "Quantum Memristors with Quantum 
+    Computers" from Y.-M. Guo, F. Albarr ́an-Arriagada, H. Alaeian, E. Solano, and G. Alvarado Barrios. 
+
+    Author: Chiara Paglioni
+    Link to Article: https://link.aps.org/doi/10.1103/PhysRevApplied.18.024082  
 """
 
 

@@ -4,7 +4,11 @@ import matplotlib.pyplot as plt
 
 """
     Simulation of Quantized three-ion-channel Hodgkin-Huxley model
+    
+    Authors: Tasio Gonzalez-Raya, Enrique Solano, and Mikel Sanz
+    Link to Article: https://doi.org/10.22331/q-2020-01-20-224 
 """
+
 if __name__ == "__main__":
     qhh = QHH_3()
     

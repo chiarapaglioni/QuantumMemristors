@@ -1,11 +1,14 @@
 import numpy as np
 
-
-class QHH_3:
-    """
+"""
     Implementation of Quantized three-ion-channel Hodgkin-Huxley model
     (Sodium (Na), Potassium (K) and Leakage channel are considered)
-    """
+    
+    Authors: Tasio Gonzalez-Raya, Enrique Solano, and Mikel Sanz
+    Link to Article: https://doi.org/10.22331/q-2020-01-20-224
+"""
+
+class QHH_3:
 
     def __init__(self):
         pass
