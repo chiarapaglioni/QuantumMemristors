@@ -1,97 +1,99 @@
 from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister
-import numpy as np
 from qiskit.circuit.library import RYGate
-from q_memristor.circuits.Simulator import IBMQSimulator
+import numpy as np
+from Simulator import IBMQSimulator
 from q_memristor.circuits.iv_plot_circuit import IVplot
 from q_memristor.numerical.num_memristor import memristor
-from q_memristor.plots.time_plot import Tplot
+from q_memristor.circuits.t_plot_circuit import Tplot
 
 """
-    TEST 1
-    A new circuit is created where a new evolution step is added for each time step
-    
-    Results: 
-        - While the initial results seem to be in line with the one showed in the paper, 
-        the update does not behave according to the same behaviour shown in the paper 
-        (this might be due to the wrong value of the time?)
+    Circuit simulation of dynamic quantum memristor based on the article "Quantum Memristors with Quantum 
+    Computers" from Y.-M. Guo, F. Albarr ́an-Arriagada, H. Alaeian, E. Solano, and G. Alvarado Barrios. 
+
+    Author: Chiara Paglioni
+    Link to Article: https://link.aps.org/doi/10.1103/PhysRevApplied.18.024082  
 """
 
 if __name__ == '__main__':
 
+    # Time-steps
+    # Number of time steps = (1 - 0) / 0.0333 seconds = 30 time steps
+    eps = 0.1
+    tmax = 1.2
+    t = np.arange(0, tmax, eps)
+
+    # SIMULATION PARAMETERS
+    # a and b are the parameters used in the pure state used to initialize the memristor
+    # Based on Fig. 2 of the paper:
+    # y0 = 0.2 or 0.02
     a = np.pi / 4
     b = np.pi / 5
     y0 = 0.4
     w = 1
     m = 1
     h = 1
-    backend_string = 'qasm_simulator'
-    shots = 5
 
     pure_state = [np.cos(a), np.sin(a) * np.exp(1j * b)]
 
-    mem = memristor(y0, w, h, m, a, b)
+    backend_string = 'qasm_simulator'
+    shots = 5000
+
+    # simulator = IBMQSimulator(backend_string, shots)
     simulator = IBMQSimulator(backend_string, shots)
 
-    iv_plot = IVplot()
+    # iv_plot = IVplot()
     t_plot = Tplot()
-
-    eps = 1
-    tmax = 20
-    t = np.arange(0, tmax, eps)
 
     V = []
     I = []
 
-    n = 0
+    mem = memristor(y0, w, h, m, a, b)
+
+    # EVOLUTION PROCESS
     expectation_values = []
-    for i in range(len(t)):
-        print('Time-step: ', t[i])
-
-        n += 1
-
-        # Initialize registers
-        Q_env = QuantumRegister(n, 'Q_env')
+    for i in range(len(t) - 1):
+        # REGISTERS OF THE CIRCUIT
+        # Q_sys = memristor
+        Q_env = QuantumRegister(i+1, 'Q_env')
         Q_sys = QuantumRegister(1, 'Q_sys')
         C = ClassicalRegister(1, 'C')
 
-        # Create a quantum circuit with two qubits
+        # Create the quantum circuit
         circuit = QuantumCircuit(Q_env, Q_sys, C)
 
-        # Apply gates to circuit
-
-        # INITIALIZATION
-        zero_state = [1] + [0] * (2 ** len(Q_env) - 1)
-
-        circuit.initialize(zero_state, Q_env)
+        # INITIALIZATION PROCESS
         circuit.initialize(pure_state, Q_sys)
 
-        # EVOLUTION
-        x = 0
-        for j in range(n-1):
-            if n == 1:
-                theta = np.arccos(np.exp(mem.k1(t[j])))
-            else:
-                theta = np.arccos(np.exp(simulator.k(t[j + 1], t[j])))
-            print('Theta ', x, ' : ', theta)
+        # The other registers are automatically initialized to the zero state
+        zero_state = [1] + [0] * (2 ** len(Q_env) - 1)
+        circuit.initialize(zero_state, Q_env)
 
-            # Implementation of controlled RY gate
-            cry = RYGate(theta).control(1)
+        print('Time-step: ', t[i])
 
+        theta = np.arccos(np.exp(simulator.k(t[i + 1], t[i])))
+        print('Theta: ', theta)
+
+        # Implementation of controlled-RY (cry) gate
+        cry = RYGate(theta).control(1)
+
+        if i == 0:
+            circuit.append(cry, [Q_sys, Q_env])
+            circuit.cnot(Q_env, Q_sys)
+
+        else:
             evol_qc = QuantumCircuit(Q_env, Q_sys, name='evolution')
             # Apply cry gate to each timestep of the evolution
-            if n == 1:
-                circuit.append(cry, [Q_sys, Q_env])
-                circuit.cnot(Q_env, Q_sys)
-            else:
-                x += 1
-                evol_qc.append(cry, [Q_sys, Q_env[n - 1 - x]])
-                evol_qc.cnot(Q_env[n - 1 - x], Q_sys)
+            for j in range(i+1):
+                evol_qc.append(cry, [Q_sys, Q_env[i - j]])
+                evol_qc.cnot(Q_env[i - j], Q_sys)
 
             all_qbits = Q_env[:] + Q_sys[:]
             circuit.append(evol_qc, all_qbits)
 
-        # MEASUREMENT
-        # Apply gates to perform measurement for Pauli-y
+        # MEASUREMENT PROCESS
+
+        # The measurement over Pauli-Y provides the values of the matrices that should be plugged into the equation of
+        # the voltage and current.
         circuit.sdg(Q_sys)
         circuit.h(Q_sys)
 
@@ -99,35 +101,32 @@ if __name__ == '__main__':
         # second parameter = 2 = classical bit to place the measurement result in
         circuit.measure(Q_sys, C)
 
+        # UNCOMMENT TO DISPLAY CIRCUIT
         # print(circuit.draw())
         # print(circuit.decompose().draw())
 
         # Save image of final circuit
-        # circuit.draw('mpl', filename='1t_circuit.png')
+        # circuit.decompose().draw('mpl', filename='dynamic_circuit.png')
 
+        # Execute the circuit using the simulator
         counts, measurements, exp_value = simulator.execute_circuit(circuit)
 
-        print('Simulator Counts: ', counts)
-        # print('Simulator Measurements: ', measurements)
-        print('Simulator Expectation Value: ', exp_value)
+        print('Simulator Measurement: ', counts)
+        # Example Simulator Measurement:  {'1': 16, '0': 1008}
+        # 1 --> obtained 16 times
+        # 0 --> obtained 1008 times
+        # print('Measurements', measurements)
+        expectation_values.append(exp_value)
+        print('Expectation Value: ', exp_value)
 
-        # Results for initial values at t = 0
-        #
-        # Simulator Expectation Value:  0.5888
-        # Voltage:  -0.2081722363813196
-        # Current:  -0.013426173789837254
-        v_val = -(1 / 2) * np.sqrt((m * h * w) / 2) * exp_value
-        i_val = mem.gamma(t[i]) * v_val
-
-        iv_plot.update(v_val, i_val)
-        t_plot.update(t[i], v_val, i_val)
-
-        V.append(v_val)
-        I.append(i_val)
-
-        print('Voltage: ', v_val)
-        print('Current: ', i_val)
+        V.append(-(1 / 2) * np.sqrt((m * h * w) / 2) * expectation_values[i])
+        I.append(mem.gamma(t[i]) * V[i])
+        print('Gamma at time ', t[i], ' : ', mem.gamma(t[i]))
+        print('Voltage at time ', t[i], ' : ', V[i])
+        print('Current at time ', t[i], ' : ', I[i])
         print()
 
-    iv_plot.save_plot()
+        # iv_plot.update(V[i], I[i])
+        t_plot.update(t[i], V[i], I[i])
+
     t_plot.save_plot()

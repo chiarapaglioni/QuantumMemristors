@@ -4,7 +4,7 @@ import numpy as np
 from Simulator import IBMQSimulator
 from q_memristor.circuits.iv_plot_circuit import IVplot
 from q_memristor.numerical.num_memristor import memristor
-from q_memristor.plots.time_plot import Tplot
+from q_memristor.circuits.t_plot_circuit import Tplot
 
 """
     Circuit simulation of dynamic quantum memristor based on the article "Quantum Memristors with Quantum 
@@ -19,7 +19,7 @@ if __name__ == '__main__':
     # Time-steps
     # Number of time steps = (1 - 0) / 0.0333 seconds = 30 time steps
     eps = 0.1
-    tmax = 1.1
+    tmax = 1.2
     t = np.arange(0, tmax, eps)
 
     # SIMULATION PARAMETERS
@@ -36,10 +36,13 @@ if __name__ == '__main__':
     pure_state = [np.cos(a), np.sin(a) * np.exp(1j * b)]
 
     backend_string = 'qasm_simulator'
-    shots = 50000
+    shots = 5000
 
     # simulator = IBMQSimulator(backend_string, shots)
     simulator = IBMQSimulator(backend_string, shots)
+
+    # iv_plot = IVplot()
+    t_plot = Tplot()
 
     V = []
     I = []
@@ -57,8 +60,11 @@ if __name__ == '__main__':
 
     # INITIALIZATION PROCESS
     circuit.initialize(pure_state, Q_sys)
-    zero_state = [1] + [0] * (2 ** len(Q_env) - 1)
-    circuit.initialize(zero_state, Q_env)
+
+    # The other registers are automatically initialized to the zero state
+    # zero_state = [1] + [0] * (2 ** len(Q_env) - 1)
+    # print(zero_state)
+    # circuit.initialize(zero_state, Q_env)
 
     # EVOLUTION PROCESS
     x = 0
@@ -111,9 +117,15 @@ if __name__ == '__main__':
 
         V.append(-(1 / 2) * np.sqrt((m * h * w) / 2) * expectation_values[i])
         I.append(mem.gamma(t[i]) * V[i])
+        print('Gamma at time ', t[i], ' : ', mem.gamma(t[i]))
         print('Voltage at time ', t[i], ' : ', V[i])
         print('Current at time ', t[i], ' : ', I[i])
         print()
+
+        # iv_plot.update(V[i], I[i])
+        t_plot.update(t[i], V[i], I[i])
+
+    t_plot.save_plot()
 
     # EXPECTATION VALUES
     # y_eigenvalues = {'0': 1, '1': -1}
@@ -143,9 +155,6 @@ if __name__ == '__main__':
     #     expectation_values.append(expectation_value)
 
     # print('Expectation Values: ', expectation_values)
-
-    # iv_plot = IVplot()
-    # t_plot = Tplot()
 
     # VOLTAGE CALCULATION
     # Initial results:

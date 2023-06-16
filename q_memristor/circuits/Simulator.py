@@ -15,10 +15,11 @@ class IBMQSimulator:
         result = job.result()
         measurements = result.get_memory()
         cnts = result.get_counts(circ)
-        if len(cnts) == 1:
-            exp_value = (cnts[measurements[0]]) / self.shots
-        else:
-            exp_value = (cnts['0'] - cnts['1']) / self.shots
+
+        # if len(cnts) == 1:
+        #     exp_value = (cnts[measurements[0]]) / self.shots
+        # else:
+        exp_value = (cnts['0'] - cnts['1']) / self.shots
         return cnts, measurements, exp_value
 
     def gamma(self, ts):
