@@ -19,8 +19,8 @@ if __name__ == '__main__':
     # Time-steps
     # Number of time steps = (1 - 0) / 0.0333 seconds = 30 time steps
     # eps = 0.0333
-    eps = 1
-    tmax = 20.0
+    eps = 0.1
+    tmax = 1.1
     t = np.arange(0, tmax, eps)
 
     # SIMULATION PARAMETERS
@@ -50,25 +50,28 @@ if __name__ == '__main__':
 
     mem = memristor(y0, w, h, m, a, b)
 
+    # REGISTERS OF THE CIRCUIT
+    # Q_sys = memristor
+    Q_env = QuantumRegister(len(t), 'Q_env')
+    Q_sys = QuantumRegister(1, 'Q_sys')
+    C = ClassicalRegister(1, 'C')
+
+    # Create the quantum circuit
+    circuit = QuantumCircuit(Q_env, Q_sys, C)
+
+    # INITIALIZATION PROCESS
+    circuit.initialize(pure_state, Q_sys)
+
+    # The other registers are automatically initialized to the zero state
+    zero_state = [1] + [0] * (2 ** len(Q_env) - 1)
+    circuit.initialize(zero_state, Q_env)
+
     # EVOLUTION PROCESS
     expectation_values = []
     sim_counts = []
+    x = 0
     for i in range(len(t) - 1):
-        # REGISTERS OF THE CIRCUIT
-        # Q_sys = memristor
-        Q_env = QuantumRegister(i+1, 'Q_env')
-        Q_sys = QuantumRegister(1, 'Q_sys')
-        C = ClassicalRegister(1, 'C')
-
-        # Create the quantum circuit
-        circuit = QuantumCircuit(Q_env, Q_sys, C)
-
-        # INITIALIZATION PROCESS
-        circuit.initialize(pure_state, Q_sys)
-
-        # The other registers are automatically initialized to the zero state
-        zero_state = [1] + [0] * (2 ** len(Q_env) - 1)
-        circuit.initialize(zero_state, Q_env)
+        x += 1
 
         print('Time-step: ', t[i])
 
@@ -78,19 +81,13 @@ if __name__ == '__main__':
         # Implementation of controlled-RY (cry) gate
         cry = RYGate(theta).control(1)
 
-        if i == 0:
-            circuit.append(cry, [Q_sys, Q_env])
-            circuit.cnot(Q_env, Q_sys)
+        evol_qc = QuantumCircuit(Q_env, Q_sys, name='evolution')
+        # Apply cry gate to each timestep of the evolution
+        evol_qc.append(cry, [Q_sys, Q_env[i - x]])
+        evol_qc.cnot(Q_env[i - x], Q_sys)
 
-        else:
-            evol_qc = QuantumCircuit(Q_env, Q_sys, name='evolution')
-            # Apply cry gate to each timestep of the evolution
-            for j in range(i+1):
-                evol_qc.append(cry, [Q_sys, Q_env[i - j]])
-                evol_qc.cnot(Q_env[i - j], Q_sys)
-
-            all_qbits = Q_env[:] + Q_sys[:]
-            circuit.append(evol_qc, all_qbits)
+        all_qbits = Q_env[:] + Q_sys[:]
+        circuit.append(evol_qc, all_qbits)
 
         # MEASUREMENT PROCESS
 
@@ -103,6 +100,8 @@ if __name__ == '__main__':
         # second parameter = 2 = classical bit to place the measurement result in
         circuit.measure(Q_sys, C)
 
+        circuit.barrier()
+
         # UNCOMMENT TO DISPLAY CIRCUIT
         # print(circuit.draw())
         # print(circuit.decompose().draw())
@@ -111,41 +110,25 @@ if __name__ == '__main__':
         # circuit.decompose().draw('mpl', filename='dynamic_circuit.png')
 
         # Execute the circuit using the simulator
-        counts, measurements, exp_value = simulator.execute_circuit(circuit)
-        sim_counts.append(counts)
+    counts, measurements, exp_value = simulator.execute_circuit(circuit)
+    sim_counts.append(counts)
 
-        print('Simulator Measurement: ', counts)
-        # Example Simulator Measurement:  {'1': 16, '0': 1008}
-        # 1 --> obtained 16 times
-        # 0 --> obtained 1008 times
-        # print('Measurements', measurements)
-        expectation_values.append(exp_value)
-        print('Expectation Value: ', exp_value)
-
-        V.append(-(1 / 2) * np.sqrt((m * h * w) / 2) * expectation_values[i])
-        I.append(mem.gamma(t[i]) * V[i])
-        print('Gamma at time ', t[i], ' : ', mem.gamma(t[i]))
-        print('Voltage at time ', t[i], ' : ', V[i])
-        print('Current at time ', t[i], ' : ', I[i])
-        print()
-
-        # iv_plot.update(V[i], I[i])
-        t_plot.update(t[i], V[i], I[i])
-
-    t_plot.save_plot()
-
-    # TEST EXPECTATION VALUE
-    # Calculate expectation values increasing the number of shots at each iteration
-    sim_expectation = []
-    shot_val = 0
-    zero_count = 0
-    one_count = 0
-    for count in sim_counts:
-        shot_val += shots
-        zero_count += count['0']
-        one_count += count['1']
-        expect_value = (zero_count - one_count) / shot_val
-        sim_expectation.append(expect_value)
-
-    print('Expectation Values: ')
-    print(sim_expectation)
+    print('Simulator Measurement: ', counts)
+    # Example Simulator Measurement:  {'1': 16, '0': 1008}
+    # 1 --> obtained 16 times
+    # 0 --> obtained 1008 times
+    print('Measurements', measurements)
+    # expectation_values.append(exp_value)
+    # print('Expectation Value: ', exp_value)
+    #
+    # V.append(-(1 / 2) * np.sqrt((m * h * w) / 2) * expectation_values[i])
+    # I.append(mem.gamma(t[i]) * V[i])
+    # print('Gamma at time ', t[i], ' : ', mem.gamma(t[i]))
+    # print('Voltage at time ', t[i], ' : ', V[i])
+    # print('Current at time ', t[i], ' : ', I[i])
+    # print()
+    #
+    # # iv_plot.update(V[i], I[i])
+    # t_plot.update(t[i], V[i], I[i])
+    #
+    # t_plot.save_plot()

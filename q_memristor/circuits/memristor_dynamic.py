@@ -36,7 +36,7 @@ if __name__ == '__main__':
     pure_state = [np.cos(a), np.sin(a) * np.exp(1j * b)]
 
     backend_string = 'qasm_simulator'
-    shots = 5000
+    shots = 50000
 
     # simulator = IBMQSimulator(backend_string, shots)
     simulator = IBMQSimulator(backend_string, shots)
@@ -72,7 +72,8 @@ if __name__ == '__main__':
     for i in range(len(t) - 1):
         print('Time-step: ', t[i])
 
-        theta = np.arccos(np.exp(simulator.k(t[i + 1], t[i])))
+        # theta = np.arccos(np.exp(simulator.k(t[i + 1], t[i])))
+        theta = np.arccos(np.exp(t[i]))
         print('Theta: ', theta)
 
         evol_qc = QuantumCircuit(Q_env, Q_sys, name='evolution')

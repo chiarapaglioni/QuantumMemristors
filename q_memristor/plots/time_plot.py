@@ -33,8 +33,8 @@ class Tplot:
         self.ax.plot(self.xs, self.voltages, 'bo-', markersize=1, label='Voltage')
         self.ax.plot(self.xs, self.currents, 'ro-', markersize=1, label='Current')
 
-        self.ax.set_xlim(0, t+1)
-        self.ax.set_ylim(-4, 3)
+        self.ax.set_xlim(0, t+0.1)
+        self.ax.set_ylim(-0.4, 0.1)
 
         if not self.labels_displayed:
             self.ax.legend()
