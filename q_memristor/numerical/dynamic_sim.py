@@ -9,6 +9,9 @@ import numpy as np
 
     Author: Chiara Paglioni
     Link to Article: https://link.aps.org/doi/10.1103/PhysRevApplied.18.024082  
+    
+    Experiment: 
+    Here the dynamical numerical simulation of the single memristive dynamics is implemented. 
 """
 
 
@@ -24,11 +27,10 @@ if __name__ == '__main__':
     m = 1
     h = 1
     w = 1
-    y0 = 0.2
+    y0 = 0.4
     amplitude = 1
 
-    pauli_y = np.array([[0, -1j], [1j, 0]])
-    pauli_x = np.array([[0, 1], [1, 0]])
+    pure_state = np.array([np.cos(a), np.sin(a) * np.exp(1j * b)], dtype=complex)
 
     mem = memristor(y0, w, h, m, a, b)
 
@@ -42,43 +44,53 @@ if __name__ == '__main__':
 
     t_plt = time_plot.Tplot()
 
-    for i in range(0, len(t)-1):
-        k_val = mem.k1(t[i])
+    # Initialize density matrix at time 0
+    k_val0 = mem.k1(0)
+    density_mat0 = mem.get_density_mat(k_val0)
+    schrodinger_mat0 = mem.get_Schrodinger(0, density_mat0)
+    density_states.append(density_mat0)
+    schrodinger_states.append(schrodinger_mat0)
 
-        if t[i] == 0.0:
-            density_mat = mem.get_density_mat(k_val)
-            schrodinger_mat = mem.get_Schrödinger(t[i], density_mat)
-            density_states.append(density_mat)
-            schrodinger_states.append(schrodinger_mat)
+    for i in range(1, len(t)-1):
+        k_val = mem.k(t[i], t[i+1])
 
-        else:
-            density_mat = mem.get_E0(t[i], t[i+1]) @ density_states[0] @ mem.adjoint(mem.get_E0(t[i], t[i+1])) + mem.get_E1(t[i], t[i+1]) @ density_states[0] @ mem.adjoint(mem.get_E1(t[i], t[i+1]))
-            schrodinger_mat = mem.get_Schrödinger(t[i], density_mat)
-            density_states.append(density_mat)
-            schrodinger_states.append(schrodinger_mat)
+        density_mat = mem.get_E0(t[i], t[i+1]) @ density_states[0] @ mem.adjoint(mem.get_E0(t[i], t[i+1])) + mem.get_E1(t[i], t[i+1]) @ density_states[0] @ mem.adjoint(mem.get_E1(t[i], t[i+1]))
+        pI_me = mem.master_eq_I(t[i], density_mat)
+        schrodinger_mat = mem.get_Schrodinger(t[i], density_mat)
+        p2_me = mem.master_eq_2(t[i], schrodinger_mat)
+
+        density_states.append(density_mat)
+        schrodinger_states.append(schrodinger_mat)
 
         k.append(k_val)
 
         print('Time: ', t[i])
         print('K: ', k_val)
-        print('Density Matrix: ', '\n', density_mat)
-        print('Schrodinger Picture: ', '\n', schrodinger_mat)
+        print('Density Matrix: ')
+        print('\n'.join(['\t'.join([str(cell) for cell in row]) for row in density_mat]))
+        print('Schrodinger Picture: ')
+        print('\n'.join(['\t'.join([str(cell) for cell in row]) for row in schrodinger_mat]))
+        print('p_I Master Equation: ')
+        print('\n'.join(['\t'.join([str(cell) for cell in row]) for row in pI_me]))
+        print('p_2 Master Equation: ')
+        print('\n'.join(['\t'.join([str(cell) for cell in row]) for row in p2_me]))
 
         exp_valueY = np.trace(pauli_y @ schrodinger_mat)
         exp_valueX = np.trace(pauli_x @ schrodinger_mat)
+        exp_valueZ = np.trace(pauli_z @ schrodinger_mat)
 
-        print("Expectation value Y:", exp_valueY)
-        print("Expectation value X:", exp_valueX)
+        print("Expectation value Pauli Y:", exp_valueY)
+        print("Expectation value Pauli X:", exp_valueX)
+        print("Expectation value Pauli Z:", exp_valueZ)
 
         vol_val = -(1 / 2) * np.sqrt((m * h * w) / 2) * exp_valueY
-        curr_val = np.sqrt((m * h * w) / 2) * exp_valueY - np.sqrt((m * w) / (2*h)) * exp_valueX
-        curr_temp = mem.gamma(t[i]) * vol_val
+        # curr_val = np.sqrt((m * h * w) / 2) * exp_valueY - np.sqrt((m * w) / (2*h)) * exp_valueX
+        curr_val = mem.gamma(t[i]) * vol_val
 
         V.append(vol_val)
         I.append(curr_val)
         print('V: ', V[i], ' at time: ', t[i])
         print('I: ', I[i], ' at time: ', t[i])
-        print('I: ', curr_temp, ' at time: ', t[i])
         print()
 
         t_plt.update(t[i], V[i], I[i])

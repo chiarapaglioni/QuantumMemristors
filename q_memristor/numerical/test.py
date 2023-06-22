@@ -1,6 +1,12 @@
 from mpmath import quad
 import numpy as np
 
+"""
+    This class is only used to test the calculations of numerical simulations
+    
+    DELETE BEFORE SUBMISSION!!!
+"""
+
 
 def decay_rate(t, a):
     return -2 * np.real(c1(t, a), c1(t, a))
@@ -52,7 +58,7 @@ if __name__ == '__main__':
     pI_mat = get_density_mat(a, b, k_val0)
     ham = hamiltonian(h, w, pauli_z)
 
-    # At t = 0 the Schrodinger picture is equal to the density mat
+    # At t = 0 the Schrodinger picture is equal to the density mat ?
 
     exp_valueY = np.trace(pauli_y @ pI_mat)
     v0_val = -(1 / 2) * np.sqrt((m * h * w) / 2) * exp_valueY
