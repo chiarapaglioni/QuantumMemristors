@@ -16,13 +16,6 @@ The package **q_memristor/circuits** provides the implementation of *quantum cir
 - `memristor_dynamic2.py` implements a dynamic evolutionary step update of single memristive dynamic.
 - `memristor_coupled.py` implements a dynamic evolutionary step update followed by an unitary interaction operator of two coupled quantum memristors acting in parallel.
 
-## Hodgkin Huxley Model
-
-The package **HHModel** provides the implementation of the Quantized Single-Ion and Three-Ion Hodgkin-Huxley Model [1][2].
-
-- Classes `QHH_1.py` and `QSim_1.py` provide the *implementation* and *simulation* of the Single-Ion version of the model respectively [1].
-- Classes `QHH_3.py` and `QSim_3.py` provide the *implementation* and *simulation* of the Three-Ion version of the model respectively [2]. 
-
 
 ## Experimental Photonic Quantum Memristor
 
@@ -34,6 +27,13 @@ In particular, quantum memristors are used in a quantum reservoir computer that 
 - The encoded data is then passed through the quantum reservoir which is composed of quantum memristors. The implementation of the these components can be found in `memristor/utility.py`. 
 - Packages `qinfo` and `ucell` provide useful functions for problems in quantum information theory that are used in the previous classes.
 
+
+## Hodgkin Huxley Model
+
+The package **HHModel** provides the implementation of the Quantized Single-Ion and Three-Ion Hodgkin-Huxley Model [1][2].
+
+- Classes `QHH_1.py` and `QSim_1.py` provide the *implementation* and *simulation* of the Single-Ion version of the model respectively [1].
+- Classes `QHH_3.py` and `QSim_3.py` provide the *implementation* and *simulation* of the Three-Ion version of the model respectively [2]. 
 
 ## References 
 
