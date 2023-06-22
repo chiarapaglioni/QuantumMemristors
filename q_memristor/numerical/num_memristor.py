@@ -49,6 +49,13 @@ class memristor:
         result, _ = quad(integrand, ts, ts_next)
         return -result / 2
 
+    def oscillatory_k(self, t1, t2):
+        k_val = self.y0 * np.sin(self.w * (t1 + t2))
+        if k_val > 0:
+            return -k_val
+        else:
+            return k_val
+
     def get_density_mat(self, k):
         """
             Computes the density matrix p_I of a system at time t

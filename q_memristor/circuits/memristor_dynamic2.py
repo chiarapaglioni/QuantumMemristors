@@ -70,13 +70,13 @@ if __name__ == '__main__':
 
         print('Time-step: ', t[i])
 
-        theta = np.arccos(np.exp(mem.k(t[i], t[i+1])))
-        print('Theta: ', theta)
-
-        # Implementation of controlled-RY (cry) gate
-        cry = RYGate(theta).control(1)
-
         if i == 0:
+            theta = np.arccos(np.exp(mem.k(t[0], t[1])))
+            print('Theta: ', theta, ' at time: ', 0.0)
+
+            # Implementation of controlled-RY (cry) gate
+            cry = RYGate(theta).control(1)
+
             circuit.append(cry, [Q_sys, Q_env])
             circuit.cnot(Q_env, Q_sys)
 
@@ -84,6 +84,13 @@ if __name__ == '__main__':
             evol_qc = QuantumCircuit(Q_env, Q_sys, name='evolution')
             # Apply cry gate to each timestep of the evolution
             for j in range(i+1):
+                # theta = np.arccos(np.exp(mem.k(t[j], t[j + 1])))
+                # print('K: ', mem.k(t[j], t[j + 1]))
+                print('Theta: ', theta, ' at time: ', t[j])
+
+                # Implementation of controlled-RY (cry) gate
+                cry = RYGate(theta).control(1)
+
                 evol_qc.append(cry, [Q_sys, Q_env[i - j]])
                 evol_qc.cnot(Q_env[i - j], Q_sys)
 
@@ -106,7 +113,7 @@ if __name__ == '__main__':
         # print(circuit.decompose().draw())
 
         # Save image of final circuit
-        circuit.decompose().draw('mpl', filename='figures/dynamic_circuit2.png')
+        # circuit.decompose().draw('mpl', filename='figures/dynamic_circuit2.png')
 
         # Execute the circuit using the simulator
         counts, measurements, exp_value = sim.execute_circuit(circuit)
