@@ -29,5 +29,5 @@ class IVplot:
         self.ax.plot(self.xs, self.ys, 'o', markersize=3)
         plt.pause(0.001)
 
-    def save_plot(self):
-        self.fig.savefig('iv_plot.png')
+    def save_plot(self, plot_name):
+        self.fig.savefig(plot_name)

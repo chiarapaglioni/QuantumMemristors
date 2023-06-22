@@ -2,7 +2,6 @@ from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister
 from qiskit.circuit.library import RYGate
 import numpy as np
 from simulator import IBMQSimulator
-from q_memristor.circuits.iv_plot_circuit import IVplot
 from q_memristor.numerical.num_memristor import memristor
 from q_memristor.circuits.t_plot_circuit import Tplot
 
@@ -12,40 +11,42 @@ from q_memristor.circuits.t_plot_circuit import Tplot
 
     Author: Chiara Paglioni
     Link to Article: https://link.aps.org/doi/10.1103/PhysRevApplied.18.024082  
+    
+    CIRCUIT SIMULATION: 
+    First, a new quantum circuit is initialized with all the n Q_env registers where n corresponds to the number of 
+    total time-steps. 
+    Moreover, at each increase in time, a new evolutionary step is performed followed by a measurement.
 """
 
+# Time-steps
+# Number of time steps = (1 - 0) / 0.0333 seconds = 30 time steps
+eps = 0.1
+tmax = 1.1
+t = np.arange(0, tmax, eps)
+
+# SIMULATION PARAMETERS
+# Based on Fig. 2 of the paper --> y0 = 0.2 or 0.02
+a = np.pi / 4
+b = np.pi / 5
+y0 = 0.4
+w = 1
+m = 1
+h = 1
+
+pure_state = [np.cos(a), np.sin(a) * np.exp(1j * b)]
+
+backend_string = 'qasm_simulator'
+shots = 50000
+
+sim = IBMQSimulator(backend_string, shots)
+
+# iv_plot = IVplot()
+t_plot = Tplot()
+
+V = []
+I = []
+
 if __name__ == '__main__':
-
-    # Time-steps
-    # Number of time steps = (1 - 0) / 0.0333 seconds = 30 time steps
-    eps = 0.1
-    tmax = 1.2
-    t = np.arange(0, tmax, eps)
-
-    # SIMULATION PARAMETERS
-    # a and b are the parameters used in the pure state used to initialize the memristor
-    # Based on Fig. 2 of the paper:
-    # y0 = 0.2 or 0.02
-    a = np.pi / 4
-    b = np.pi / 5
-    y0 = 0.4
-    w = 1
-    m = 1
-    h = 1
-
-    pure_state = [np.cos(a), np.sin(a) * np.exp(1j * b)]
-
-    backend_string = 'qasm_simulator'
-    shots = 50000
-
-    # simulator = IBMQSimulator(backend_string, shots)
-    simulator = IBMQSimulator(backend_string, shots)
-
-    # iv_plot = IVplot()
-    t_plot = Tplot()
-
-    V = []
-    I = []
 
     mem = memristor(y0, w, h, m, a, b)
 
@@ -55,15 +56,12 @@ if __name__ == '__main__':
     Q_sys = QuantumRegister(1, 'Q_sys')
     C = ClassicalRegister(1, 'C')
 
-    # Create the quantum circuit
     circuit = QuantumCircuit(Q_env, Q_sys, C)
 
     # INITIALIZATION PROCESS
     circuit.initialize(pure_state, Q_sys)
-
     # The other registers are automatically initialized to the zero state
     # zero_state = [1] + [0] * (2 ** len(Q_env) - 1)
-    # print(zero_state)
     # circuit.initialize(zero_state, Q_env)
 
     # EVOLUTION PROCESS
@@ -72,8 +70,7 @@ if __name__ == '__main__':
     for i in range(len(t) - 1):
         print('Time-step: ', t[i])
 
-        # theta = np.arccos(np.exp(simulator.k(t[i + 1], t[i])))
-        theta = np.arccos(np.exp(t[i]))
+        theta = np.arccos(np.exp(mem.k(t[i], t[i+1])))
         print('Theta: ', theta)
 
         evol_qc = QuantumCircuit(Q_env, Q_sys, name='evolution')
@@ -103,10 +100,10 @@ if __name__ == '__main__':
         # print(circuit.decompose().draw())
 
         # Save image of final circuit
-        # circuit.decompose().draw('mpl', filename='dynamic_circuit.png')
+        circuit.decompose().draw('mpl', filename='figures/dynamic_circuit1.png')
 
         # Execute the circuit using the simulator
-        counts, measurements, exp_value = simulator.execute_circuit(circuit)
+        counts, measurements, exp_value = sim.execute_circuit(circuit)
 
         print('Simulator Measurement: ', counts)
         # Example Simulator Measurement:  {'1': 16, '0': 1008}
@@ -126,43 +123,9 @@ if __name__ == '__main__':
         # iv_plot.update(V[i], I[i])
         t_plot.update(t[i], V[i], I[i])
 
-    t_plot.save_plot()
+    t_plot.save_plot('figures/plot_dynamic_circuit1.png')
 
-    # EXPECTATION VALUES
-    # y_eigenvalues = {'0': 1, '1': -1}
-    # pauli_y = np.array([[0, -1j], [1j, 0]])
-    #
-    # Calculate the expectation value for each shot
-    # expectation_values = []
-    # expectation_value = 0
-    # count_1 = 0
-    # count_0 = 0
-    # shot_count = 0
-    # for measurement in measurements:
-    #     # Get the eigenvalue corresponding to the measurement outcome
-    #     eigenvalue = y_eigenvalues[measurement]
-    #
-    #     shot_count = shot_count + 1
-    #
-    #     if int(measurement) == 1:
-    #         count_1 = count_1 + 1
-    #     else:
-    #         count_0 = count_0 + 1
-    #
-    #     # Calculate the expectation value for the shot
-    #     # expectation_value = expectation_value - (eigenvalue * int(measurement) * counts[measurement] / shots)
-    #     expectation_value = np.abs(count_0 - count_1) / shot_count
-    #     # print('Exp: ', expectation_value)
-    #     expectation_values.append(expectation_value)
-
-    # print('Expectation Values: ', expectation_values)
-
-    # VOLTAGE CALCULATION
+    # VOLTAGE CALCULATIONS
     # Initial results:
     # V0 = -0.3535533905932738
     # I0 = -0.011401302470989517
-    # for i in range(len(expectation_values)):
-    # iv_plot.update(V[i], I[i])
-    # t_plot.update(ts, V[i], I[i])
-    # print('Voltage at time ', ts, ' : ', V[i])
-    # print('Current at time ', ts, ' : ', I[i])

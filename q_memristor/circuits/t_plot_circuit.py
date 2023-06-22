@@ -48,5 +48,5 @@ class Tplot:
 
         plt.pause(0.001)
 
-    def save_plot(self):
-        self.fig.savefig('time_plot_circuit.png')
+    def save_plot(self, plot_name):
+        self.fig.savefig(plot_name)

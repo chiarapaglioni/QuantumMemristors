@@ -147,10 +147,8 @@ if __name__ == '__main__':
     I_arr = I_arr.reshape(a_mesh.shape)
     exp_values_arr = exp_values_arr.reshape(a_mesh.shape)
 
-    # figsize=(8, 10)
-    fig, axes = plt.subplots(3, 1, figsize=(6, 9))
+    fig, axes = plt.subplots(3, 1, figsize=(7, 9))
 
-    # Create the heatmap plot for voltage
     axes[0].imshow(V_arr, cmap='YlGnBu', origin='lower')
     axes[0].set_title('Voltage Heatmap')
     axes[0].set_xlabel('a')
@@ -162,7 +160,6 @@ if __name__ == '__main__':
     axes[0].set_aspect('equal')
     axes[0].figure.colorbar(axes[0].images[0], ax=axes[0])
 
-    # Create the heatmap plot for current
     axes[1].imshow(I_arr, cmap='YlGnBu', origin='lower')
     axes[1].set_title('Current Heatmap')
     axes[1].set_xlabel('a')
@@ -174,7 +171,6 @@ if __name__ == '__main__':
     axes[1].set_aspect('equal')
     axes[1].figure.colorbar(axes[1].images[0], ax=axes[1])
 
-    # Create the heatmap plot for expectation values
     axes[2].imshow(exp_values_arr, cmap='YlGnBu', origin='lower')
     axes[2].set_title('Expectation Value Heatmap')
     axes[2].set_xlabel('a')

@@ -2,7 +2,6 @@ from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister
 from qiskit.circuit.library import RYGate
 import numpy as np
 from simulator import IBMQSimulator
-from q_memristor.circuits.iv_plot_circuit import IVplot
 from q_memristor.numerical.num_memristor import memristor
 from q_memristor.circuits.t_plot_circuit import Tplot
 
@@ -12,41 +11,41 @@ from q_memristor.circuits.t_plot_circuit import Tplot
 
     Author: Chiara Paglioni
     Link to Article: https://link.aps.org/doi/10.1103/PhysRevApplied.18.024082  
+    
+    CIRCUIT SIMULATION: 
+    A a new circuit is created at each time-step increase and the number of Q_env register is also increased at each 
+    timestep. 
 """
 
+# Time-steps
+# Number of time steps = (1 - 0) / 0.0333 seconds = 30 time steps
+eps = 0.1
+tmax = 1.1
+t = np.arange(0, tmax, eps)
+
+# SIMULATION PARAMETERS
+# Based on Fig. 2 of the paper --> y0 = 0.2 or 0.02
+a = np.pi / 4
+b = np.pi / 5
+y0 = 0.4
+w = 1
+m = 1
+h = 1
+
+pure_state = [np.cos(a), np.sin(a) * np.exp(1j * b)]
+
+backend_string = 'qasm_simulator'
+shots = 50000
+
+sim = IBMQSimulator(backend_string, shots)
+
+# iv_plot = IVplot()
+t_plot = Tplot()
+
+V = []
+I = []
+
 if __name__ == '__main__':
-
-    # Time-steps
-    # Number of time steps = (1 - 0) / 0.0333 seconds = 30 time steps
-    # eps = 0.0333
-    eps = 1
-    tmax = 20.0
-    t = np.arange(0, tmax, eps)
-
-    # SIMULATION PARAMETERS
-    # a and b are the parameters used in the pure state used to initialize the memristor
-    # Based on Fig. 2 of the paper:
-    # y0 = 0.2 or 0.02
-    a = np.pi / 4
-    b = np.pi / 5
-    y0 = 0.4
-    w = 1
-    m = 1
-    h = 1
-
-    pure_state = [np.cos(a), np.sin(a) * np.exp(1j * b)]
-
-    backend_string = 'qasm_simulator'
-    shots = 500
-
-    # simulator = IBMQSimulator(backend_string, shots)
-    simulator = IBMQSimulator(backend_string, shots)
-
-    # iv_plot = IVplot()
-    t_plot = Tplot()
-
-    V = []
-    I = []
 
     mem = memristor(y0, w, h, m, a, b)
 
@@ -60,7 +59,6 @@ if __name__ == '__main__':
         Q_sys = QuantumRegister(1, 'Q_sys')
         C = ClassicalRegister(1, 'C')
 
-        # Create the quantum circuit
         circuit = QuantumCircuit(Q_env, Q_sys, C)
 
         # INITIALIZATION PROCESS
@@ -72,7 +70,7 @@ if __name__ == '__main__':
 
         print('Time-step: ', t[i])
 
-        theta = np.arccos(np.exp(simulator.k(t[i + 1], t[i])))
+        theta = np.arccos(np.exp(mem.k(t[i], t[i+1])))
         print('Theta: ', theta)
 
         # Implementation of controlled-RY (cry) gate
@@ -108,10 +106,10 @@ if __name__ == '__main__':
         # print(circuit.decompose().draw())
 
         # Save image of final circuit
-        # circuit.decompose().draw('mpl', filename='dynamic_circuit.png')
+        circuit.decompose().draw('mpl', filename='figures/dynamic_circuit2.png')
 
         # Execute the circuit using the simulator
-        counts, measurements, exp_value = simulator.execute_circuit(circuit)
+        counts, measurements, exp_value = sim.execute_circuit(circuit)
         sim_counts.append(counts)
 
         print('Simulator Measurement: ', counts)
@@ -132,7 +130,7 @@ if __name__ == '__main__':
         # iv_plot.update(V[i], I[i])
         t_plot.update(t[i], V[i], I[i])
 
-    t_plot.save_plot()
+    t_plot.save_plot('figures/plot_dynamic_circuit2.png')
 
     # TEST EXPECTATION VALUE
     # Calculate expectation values increasing the number of shots at each iteration
