@@ -78,11 +78,11 @@ if __name__ == '__main__':
         cry = RYGate(theta).control(1)
         # Apply cry gate to each timestep of the evolution
         x += 1
-        evol_qc.append(cry, [Q_sys, Q_env[len(t) - 1 - x]])
-        evol_qc.cnot(Q_env[len(t) - 1 - x], Q_sys)
+        evol_qc.append(cry, [Q_sys, Q_env[len(t) - x]])
+        evol_qc.cnot(Q_env[len(t) - x], Q_sys)
 
         all_qbits = Q_env[:] + Q_sys[:]
-        circuit.append(evol_qc, all_qbits)
+        circuit.append(evol_qc.to_instruction(), all_qbits)
 
         # MEASUREMENT PROCESS
 

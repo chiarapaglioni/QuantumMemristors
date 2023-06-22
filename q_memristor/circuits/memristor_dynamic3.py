@@ -13,8 +13,8 @@ from q_memristor.circuits.t_plot_circuit import Tplot
     Link to Article: https://link.aps.org/doi/10.1103/PhysRevApplied.18.024082  
     
     CIRCUIT SIMULATION: 
-    A a new circuit is created at each time-step increase and the number of Q_env register is also increased at each 
-    timestep. 
+    A a new circuit is created at each time-step increase however, the number of Q_env register it is not increased at 
+    each time step but remains equal to the number of timestep at each iteration.
 """
 
 # Time-steps
@@ -55,7 +55,7 @@ if __name__ == '__main__':
     for i in range(len(t) - 1):
         # REGISTERS OF THE CIRCUIT
         # Q_sys = memristor
-        Q_env = QuantumRegister(i+1, 'Q_env')
+        Q_env = QuantumRegister(len(t), 'Q_env')
         Q_sys = QuantumRegister(1, 'Q_sys')
         C = ClassicalRegister(1, 'C')
 
@@ -70,22 +70,18 @@ if __name__ == '__main__':
 
         print('Time-step: ', t[i])
 
-        theta = np.arccos(np.exp(mem.k(t[i], t[i+1])))
-        print('Theta: ', theta)
+        x = 0
+        for i in range(i+1):
+            theta = np.arccos(np.exp(mem.k(t[i], t[i + 1])))
+            print('Theta ', i, ' :', theta)
 
-        # Implementation of controlled-RY (cry) gate
-        cry = RYGate(theta).control(1)
-
-        if i == 0:
-            circuit.append(cry, [Q_sys, Q_env])
-            circuit.cnot(Q_env, Q_sys)
-
-        else:
             evol_qc = QuantumCircuit(Q_env, Q_sys, name='evolution')
+            # Implementation of controlled-RY (cry) gate
+            cry = RYGate(theta).control(1)
             # Apply cry gate to each timestep of the evolution
-            for j in range(i+1):
-                evol_qc.append(cry, [Q_sys, Q_env[i - j]])
-                evol_qc.cnot(Q_env[i - j], Q_sys)
+            x += 1
+            evol_qc.append(cry, [Q_sys, Q_env[len(t) - x]])
+            evol_qc.cnot(Q_env[len(t) - x], Q_sys)
 
             all_qbits = Q_env[:] + Q_sys[:]
             circuit.append(evol_qc.to_instruction(), all_qbits)
@@ -106,7 +102,7 @@ if __name__ == '__main__':
         # print(circuit.decompose().draw())
 
         # Save image of final circuit
-        circuit.decompose().draw('mpl', filename='figures/dynamic_circuit2.png')
+        circuit.decompose().draw('mpl', filename='figures/dynamic_circuit3.png')
 
         # Execute the circuit using the simulator
         counts, measurements, exp_value = sim.execute_circuit(circuit)
@@ -130,7 +126,7 @@ if __name__ == '__main__':
         # iv_plot.update(V[i], I[i])
         t_plot.update(t[i], V[i], I[i])
 
-    t_plot.save_plot('figures/plot_dynamic_circuit2.png')
+    t_plot.save_plot('figures/plot_dynamic_circuit3.png')
 
     # TEST EXPECTATION VALUE
     # Calculate expectation values increasing the number of shots at each iteration

@@ -1,7 +1,10 @@
-from qiskit import Aer, execute, QuantumCircuit, QuantumRegister, ClassicalRegister
+from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister
 from qiskit.circuit.library import RYGate
-from scipy.integrate import quad
 import numpy as np
+
+from q_memristor.circuits.simulator import IBMQSimulator
+from q_memristor.circuits.t_plot_circuit import Tplot
+from q_memristor.numerical.num_memristor import memristor
 
 """
     Circuit simulation of two coupled memristors based on the article "Quantum Memristors with Quantum 
@@ -11,135 +14,126 @@ import numpy as np
     Link to Article: https://link.aps.org/doi/10.1103/PhysRevApplied.18.024082  
 """
 
-
-class IBMQSimulator:
-    def __init__(self, backend='qasm_simulator'):
-        self.backend = backend
-
-    def execute_circuit(self, circ, shots=50000):
-        # shots = 50000 (according to paper) --> reduced for computation purposes
-        sim = Aer.get_backend(self.backend)
-        job = execute(circ, sim, shots=shots)
-        result = job.result()
-        cnts = result.get_counts(circ)
-        return cnts
-
-# TODO: check correct implementation of decay rate function
-def gamma(y0, w, ts):
-    return y0 * (1 - np.sin(np.cos(w * ts)))
-
-
-# TODO: check correct implementation of k function
-def k(ts_next, ts):
-    integrand = lambda t_prime: gamma(y0, w, t_prime)
-    integral_result, _ = quad(integrand, ts, ts_next)
-    return -integral_result / 2
-
-
 # Time-steps
 eps = 0.1
-tmax = 1
+tmax = 1.1
 t = np.arange(0, tmax, eps)
 
 # SIMULATION PARAMETERS
-# TODO: determine correct parameters for the simulation
-# a and b are the parameters used in the pure state used to initialize the memristor
-#
-# Based on Fig. 2 of the paper:
-#   y0 = 0.2 or 0.02
-#   w = 1
-a = np.pi / 4
-b = np.pi / 5
-y0 = 0.2
+# Note that in theis simulation the values of a and b are the amplitudes of the initial state directly
+a = 1/np.sqrt(2)
+b = 1/np.sqrt(2)
+y0 = 0.02
 w = 1
-theta1 = np.pi
-phi1 = np.pi
-lambda1 = np.pi
-theta2 = np.pi
-phi2 = np.pi
-lambda2 = np.pi
-delta = np.pi
+m = 1
+h = 1
+delta = 1
 
-pure_state = [np.cos(a), np.sin(a) * np.exp(1j * b)]
-zero_state = [1, 0]
+pure_state = [a, b]
 
-# REGISTERS OF THE CIRCUIT
-# Q_sys = memristor
-Q_env1 = QuantumRegister(len(t), 'Q_env1')
-Q_sys1 = QuantumRegister(1, 'Q_sys1')
-Q_env2 = QuantumRegister(len(t), 'Q_env2')
-Q_sys2 = QuantumRegister(1, 'Q_sys2')
-C = ClassicalRegister(1, 'C')
+backend_string = 'qasm_simulator'
+shots = 50000
 
-# Create the quantum circuit
-circuit = QuantumCircuit(Q_env1, Q_sys1, Q_sys2, Q_env2, C)
+sim = IBMQSimulator(backend_string, shots)
 
-# INITIALIZATION PROCESS
-# circuit.u(theta1, phi1, lambda1, Q_sys)
-circuit.initialize(pure_state, Q_sys1)
-circuit.initialize(pure_state, Q_sys2)
-initial_state = [1] + [0] * (2 ** len(Q_env1) - 1)
-circuit.initialize(initial_state, Q_env1)
-initial_state = [1] + [0] * (2 ** len(Q_env2) - 1)
-circuit.initialize(initial_state, Q_env2)
+# iv_plot = IVplot()
+t_plot = Tplot()
 
-# EVOLUTION PROCESS
-for i in range(len(t) - 1):
-    print('Time-step: ', t[i])
+V = []
+I = []
 
-    theta = np.arccos(np.exp(k(t[i + 1], t[i])))
-    print('Theta: ', theta)
+if __name__ == '__main__':
 
-    evol_qc = QuantumCircuit(Q_env1, Q_sys1, Q_sys2, Q_env2, name='evolution')
-    # Implementation of controlled-RY (cry) gate
-    cry1 = RYGate(theta).control(1)
-    cry2 = RYGate(theta).control(1)
-    # Apply evolution process and interaction operator for each time-step
-    for x in range(len(t)):
-        evol_qc.append(cry1, [Q_sys1, Q_env1[len(t) - 1 - x]])
-        evol_qc.append(cry2, [Q_sys2, Q_env2[x]])
-        evol_qc.cnot(Q_env1[len(t) - 1 - x], Q_sys1)
-        evol_qc.cnot(Q_sys2, Q_env2[x])
-        # The following are the operators that form the interaction operator
-        interaction_qc = QuantumCircuit(Q_sys1, Q_sys2, name='interaction')
-        interaction_qc.rx(np.pi/2, Q_sys1)
-        interaction_qc.rx(np.pi/2, Q_sys2)
-        interaction_qc.cnot(Q_sys1, Q_sys2)
-        interaction_qc.rz(2*delta, Q_sys2)
-        interaction_qc.cnot(Q_sys1, Q_sys2)
-        interaction_qc.rx(-np.pi/2, Q_sys1)
-        interaction_qc.rx(-np.pi/2, Q_sys2)
-        evol_qc.append(interaction_qc.to_instruction(), [Q_sys1, Q_sys2])
+    mem = memristor(y0, w, h, m, a, b)
 
-    all_qbits = Q_env1[:] + Q_sys1[:] + Q_sys2[:] + Q_env2[:]
-    circuit.append(evol_qc.to_instruction(), all_qbits)
+    # EVOLUTION PROCESS
+    expectation_values = []
+    sim_counts = []
+    for i in range(len(t) - 1):
 
-# MEASUREMENT PROCESS
-# first parameter = 1 = qbit on which the measurement takes place
-# second parameter = 2 = classical bit to place the measurement result in
-circuit.u(theta2, phi2, lambda2, Q_sys1)
-circuit.u(theta2, phi2, lambda2, Q_sys2)
-circuit.measure(Q_sys1, C)
-circuit.measure(Q_sys2, C)
+        # REGISTERS OF THE CIRCUIT
+        # Q_sys = memristor
+        Q_env1 = QuantumRegister(i+1, 'Q_env1')
+        Q_sys1 = QuantumRegister(1, 'Q_sys1')
+        Q_env2 = QuantumRegister(i+1, 'Q_env2')
+        Q_sys2 = QuantumRegister(1, 'Q_sys2')
+        C = ClassicalRegister(1, 'C')
 
-# UNCOMMENT TO DISPLAY CIRCUIT
-# print(circuit.draw())
-# print(circuit.decompose().draw())
+        # Create the quantum circuit
+        circuit = QuantumCircuit(Q_env1, Q_sys1, Q_sys2, Q_env2, C)
 
-# Save image of final circuit
-circuit.decompose().draw('mpl', filename='coupled_circuit.png')
+        # INITIALIZATION PROCESS
+        circuit.initialize(pure_state, Q_sys1)
+        circuit.initialize(pure_state, Q_sys2)
+        zero_state = [1] + [0] * (2 ** len(Q_env1) - 1)
+        circuit.initialize(zero_state, Q_env1)
+        circuit.initialize(zero_state, Q_env2)
 
-# Execute the circuit using the simulator
-simulator = IBMQSimulator()
-counts = simulator.execute_circuit(circuit)
+        print('Time-step: ', t[i])
 
-print('Simulator Measurement: ', counts)
+        theta = np.arccos(np.exp(mem.k(t[i], t[i + 1])))
+        print('Theta: ', theta)
 
-# EXPECTATION VALUES
-num_shots = sum(counts.values())
-expectation_values = {}
+        # EVOLUTION PROCESS
+        for j in range(i+1):
+            evol_qc = QuantumCircuit(Q_env1, Q_sys1, Q_sys2, Q_env2, name='evolution')
 
-for register in counts:
-    expectation_values[register] = counts[register] / num_shots
+            # Implementation of controlled-RY (cry) gate
+            cry1 = RYGate(theta).control(1)
+            cry2 = RYGate(theta).control(1)
 
-print("Expectation values:", expectation_values, '\n')
+            # Apply evolution process and interaction operator for each time-step
+            evol_qc.append(cry1, [Q_sys1, Q_env1[i - j]])
+            evol_qc.append(cry2, [Q_sys2, Q_env2[j]])
+            evol_qc.cnot(Q_env1[i - j], Q_sys1)
+            evol_qc.cnot(Q_sys2, Q_env2[j])
+
+            # The following are the operators that form the interaction operator
+            interaction_qc = QuantumCircuit(Q_sys1, Q_sys2, name='interaction')
+            interaction_qc.rx(np.pi/2, Q_sys1)
+            interaction_qc.rx(np.pi/2, Q_sys2)
+            interaction_qc.cnot(Q_sys1, Q_sys2)
+            interaction_qc.rz(2*delta, Q_sys2)
+            interaction_qc.cnot(Q_sys1, Q_sys2)
+            interaction_qc.rx(-np.pi/2, Q_sys1)
+            interaction_qc.rx(-np.pi/2, Q_sys2)
+            evol_qc.append(interaction_qc.to_instruction(), [Q_sys1, Q_sys2])
+
+            all_qbits = Q_env1[:] + Q_sys1[:] + Q_sys2[:] + Q_env2[:]
+            circuit.append(evol_qc.to_instruction(), all_qbits)
+
+        # MEASUREMENT PROCESS
+        # Transform into Pauli-Y measurement
+        circuit.sdg(Q_sys1)
+        circuit.sdg(Q_sys2)
+        circuit.h(Q_sys1)
+        circuit.h(Q_sys2)
+        circuit.measure(Q_sys1, C)
+        circuit.measure(Q_sys2, C)
+
+        # UNCOMMENT TO DISPLAY CIRCUIT
+        # print(circuit.draw())
+        # print(circuit.decompose().draw())
+
+        # Save image of final circuit
+        circuit.decompose().draw('mpl', filename='figures/coupled_circuit.png')
+
+        # Execute the circuit using the simulator
+        counts, measurements, exp_value = sim.execute_circuit(circuit)
+        sim_counts.append(counts)
+        expectation_values.append(exp_value)
+
+        print('Simulator Measurement: ', counts)
+        print("Expectation values:", exp_value)
+
+        V.append(-(1 / 2) * np.sqrt((m * h * w) / 2) * expectation_values[i])
+        I.append(mem.gamma(t[i]) * V[i])
+        print('Gamma at time ', t[i], ' : ', mem.gamma(t[i]))
+        print('Voltage at time ', t[i], ' : ', V[i])
+        print('Current at time ', t[i], ' : ', I[i])
+        print()
+
+        # iv_plot.update(V[i], I[i])
+        t_plot.update(t[i], V[i], I[i])
+
+    t_plot.save_plot('figures/plot_coupled_circuit.png')
