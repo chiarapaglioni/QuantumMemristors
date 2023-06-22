@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 
 """
-    Basic implementation of time plot for quantum circuits of Voltage (V) and Current (I) over time
+    Basic implementation of time plot of Voltage (V) and Current (I) for quantum circuits
 
     Author: Chiara Paglioni
 """

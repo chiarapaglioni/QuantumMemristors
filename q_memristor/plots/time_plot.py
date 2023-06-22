@@ -43,4 +43,4 @@ class Tplot:
         plt.pause(0.001)
 
     def save_plot(self):
-        self.fig.savefig('time_plot.png')
+        self.fig.savefig('figures/time_plot.png')

@@ -1,9 +1,8 @@
 from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister
 from qiskit.circuit.library import RYGate
-from q_memristor.circuits.Simulator import IBMQSimulator
+from q_memristor.circuits.simulator import IBMQSimulator
 from q_memristor.numerical.num_memristor import memristor
 import numpy as np
-import seaborn as sns
 import matplotlib.pyplot as plt
 
 
@@ -23,7 +22,7 @@ import matplotlib.pyplot as plt
 backend_string = 'qasm_simulator'
 shots = 10000
 
-simulator = IBMQSimulator(backend_string, shots)
+sim = IBMQSimulator(backend_string, shots)
 
 # Original parameters of a and b:
 a0 = np.pi / 4
@@ -110,9 +109,9 @@ if __name__ == '__main__':
         # print(circuit.decompose().draw())
 
         # Save image of final circuit
-        # circuit.draw('mpl', filename='1t_circuit.png')
+        circuit.draw('mpl', filename='figures/1t_circuit.png')
 
-        counts, measurements, exp_value = simulator.execute_circuit(circuit)
+        counts, measurements, exp_value = sim.execute_circuit(circuit)
 
         print('Simulator Counts: ', counts)
         # print('Simulator Measurements: ', measurements)
@@ -188,10 +187,10 @@ if __name__ == '__main__':
     axes[2].figure.colorbar(axes[2].images[0], ax=axes[2])
 
     plt.tight_layout()
-    fig.savefig('heatmap.png')
+    fig.savefig('figures/heatmap.png')
 
     for i in range(len(axes)):
         box = axes[i].get_tightbbox(fig.canvas.get_renderer())
-        fig.savefig("subplot{}.png".format(i), bbox_inches=box.transformed(fig.dpi_scale_trans.inverted()))
+        fig.savefig('figures/subplot{}.png'.format(i), bbox_inches=box.transformed(fig.dpi_scale_trans.inverted()))
 
     plt.show()

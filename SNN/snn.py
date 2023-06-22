@@ -1,6 +1,12 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+"""
+    Basic structure of SNN with sinusoidal input current
+
+    Author: Chiara Paglioni
+"""
+
 if __name__ == '__main__':
 
     # Spiking Neural Network (SNN) Parameters

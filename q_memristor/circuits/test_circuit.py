@@ -1,7 +1,7 @@
 from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister
 from qiskit.circuit.library import RYGate
 import numpy as np
-from Simulator import IBMQSimulator
+from simulator import IBMQSimulator
 from q_memristor.circuits.iv_plot_circuit import IVplot
 from q_memristor.numerical.num_memristor import memristor
 from q_memristor.circuits.t_plot_circuit import Tplot

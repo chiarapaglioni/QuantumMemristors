@@ -45,4 +45,4 @@ class IVplot:
         plt.pause(0.001)
 
     def save_plot(self):
-        self.fig.savefig('iv_plot.png')
+        self.fig.savefig('figures/iv_plot.png')

@@ -1,7 +1,7 @@
 from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister
 from qiskit.circuit.library import RYGate
 import numpy as np
-from Simulator import IBMQSimulator
+from simulator import IBMQSimulator
 from q_memristor.circuits.iv_plot_circuit import IVplot
 from q_memristor.numerical.num_memristor import memristor
 from q_memristor.circuits.t_plot_circuit import Tplot
@@ -162,7 +162,7 @@ if __name__ == '__main__':
     # V0 = -0.3535533905932738
     # I0 = -0.011401302470989517
     # for i in range(len(expectation_values)):
-        # iv_plot.update(V[i], I[i])
-        # t_plot.update(ts, V[i], I[i])
-        # print('Voltage at time ', ts, ' : ', V[i])
-        # print('Current at time ', ts, ' : ', I[i])
+    # iv_plot.update(V[i], I[i])
+    # t_plot.update(ts, V[i], I[i])
+    # print('Voltage at time ', ts, ' : ', V[i])
+    # print('Current at time ', ts, ' : ', I[i])
