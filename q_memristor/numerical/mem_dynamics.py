@@ -4,7 +4,7 @@ from num_memristor import memristor
 import numpy as np
 
 """
-    Simulation of Generalized Quantum Memristive Dynamics for Sinusoidal Time Dependent Inputs
+    Simulation of Generalized Quantum Memristive Dynamics for Sinusoidal Time Dependent Input
 
     Author: Chiara Paglioni
     Link to Article: https://link.aps.org/doi/10.1103/PhysRevApplied.18.024082  

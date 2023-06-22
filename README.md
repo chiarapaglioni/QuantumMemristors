@@ -1,4 +1,20 @@
-# Quantized-HodgkinHuxleyModel
+# Quantum Memristors for Quantum Neuromorphic Computing
+
+## Two-Level Quantum Memristor
+
+The package **q_memristor/numerical** provides the *numerical simulation* of memristive devices [4].
+
+- `num_memristor.py` implements the numerical equations describing the single memristive dynamics. 
+- `operators.py` implements the different quantum Pauli operators used in the simulations.
+- `mem_dynamics.py` simulates a pinched hysterisis loop for single memristive dynamics with sinusoidal time dependent input.
+- `dynamic_sim.py` simulates the single memristive dynamics by solving the memristive equations of `num_memristor.py`.
+
+The package **q_memristor/circuits** provides the implementation of *quantum circuits* for memristive devices [4].
+
+- `simulator.py` implements the general structure of a IBM Quantum Simulator.
+- `memristor_1t.py` implements a single evolutionary step of a single memristive dynamics. This circuit it is studied for various pure initial states.
+- `memristor_dynamic2.py` implements a dynamic evolutionary step update of single memristive dynamic.
+- `memristor_coupled.py` implements a dynamic evolutionary step update followed by an unitary interaction operator of two coupled quantum memristors acting in parallel.
 
 ## Hodgkin Huxley Model
 
@@ -17,14 +33,6 @@ In particular, quantum memristors are used in a quantum reservoir computer that 
 - The data from the MINST database is encoded in the quantum domain through the class *QEncoder* in `encode.py`. 
 - The encoded data is then passed through the quantum reservoir which is composed of quantum memristors. The implementation of the these components can be found in `memristor/utility.py`. 
 - Packages `qinfo` and `ucell` provide useful functions for problems in quantum information theory that are used in the previous classes.
-
-## Quantum Memristor
-
-The package **q_memristor** provides the implementation of quantum circuits for memristive devices [4].
-
-- `memristor_1t.py` provides the implementation of a circuit for a single-time-step quantum memristor simulation with three basic steps of initialization, evolution, and the measurement process.
-- `memristor_coupled.py` is an extension of the previous circuit as it provides a dynamical simulation where the evolution step is repeated *n* times before the measurement process.
-- `memristor_dynamic.py` provides the implementation of a native interaction between two coupled quantum memristors in a digital quantum circuit.
 
 
 ## References 
