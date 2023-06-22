@@ -21,15 +21,20 @@ import matplotlib.pyplot as plt
 """
 
 backend_string = 'qasm_simulator'
-shots = 50000
+shots = 10000
 
 simulator = IBMQSimulator(backend_string, shots)
 
 # Original parameters of a and b:
-# a = np.pi / 4
-# b = np.pi / 5
+a0 = np.pi / 4
+b0 = np.pi / 5
 a_states = [0, np.pi / 6, np.pi / 4, np.pi / 3, np.pi / 2]
 b_states = [0, np.pi / 2, np.pi, (3 * np.pi) / 2, 2 * np.pi]
+a_labels = ['0', '\u03C0/6', '\u03C0/4', '\u03C0/3', '\u03C0/2']
+b_labels = ['0', '\u03C0/2', '\u03C0', '3\u03C0/2', '2\u03C0']
+
+# print(a_labels)
+# print(b_labels)
 
 y0 = 0.4
 w = 1
@@ -44,6 +49,13 @@ I = []
 
 zero_state = [1, 0]
 
+# Since the values of a and b are not used in any of the following computation from the memristor class, their initial
+# values are chosen as initial parameters
+mem = memristor(y0, w, h, m, a0, b0)
+
+# Single time-step
+t = 0.1
+
 
 def get_purestate(a_val, b_val):
     return [np.cos(a_val), np.sin(a_val) * np.exp(1j * b_val)]
@@ -52,18 +64,13 @@ def get_purestate(a_val, b_val):
 if __name__ == '__main__':
 
     # Initialize all combinations of pure states
-    for a in a_states:
-        for b in b_states:
-            pure_states.append(get_purestate(a, b))
-            labels.append('a: ' + str(a) + ' b: ' + str(b))
+    for a in range(len(a_states)):
+        for b in range(len(b_states)):
+            pure_states.append(get_purestate(a_states[a], b_states[b]))
+            labels.append('a: ' + a_labels[a] + ' b: ' + b_labels[b])
 
     for i in range(len(pure_states)):
         print('Pure State: ', labels[i])
-
-        mem = memristor(y0, w, h, m, a[i], b[i])
-
-        # Single time-step
-        t = 0.1
 
         # Simulation parameters
         theta = np.arccos(np.exp(mem.k1(t)))
@@ -128,11 +135,63 @@ if __name__ == '__main__':
         print()
 
     # Plot voltage and current based on the values of the coefficients a and b
-    sns.heatmap(V, annot=True, cmap='YlGnBu')
+    a_vals = np.array(a_states)
+    b_vals = np.array(b_states)
 
-    # Set labels and title
-    plt.xlabel('a')
-    plt.ylabel('b')
-    plt.title('Voltage')
+    a_mesh, b_mesh = np.meshgrid(a_vals, b_vals)
+
+    V_arr = np.array(V)
+    I_arr = np.array(I)
+    exp_values_arr = np.array(exp_values)
+
+    V_arr = V_arr.reshape(a_mesh.shape)
+    I_arr = I_arr.reshape(a_mesh.shape)
+    exp_values_arr = exp_values_arr.reshape(a_mesh.shape)
+
+    # figsize=(8, 10)
+    fig, axes = plt.subplots(3, 1, figsize=(6, 9))
+
+    # Create the heatmap plot for voltage
+    axes[0].imshow(V_arr, cmap='YlGnBu', origin='lower')
+    axes[0].set_title('Voltage Heatmap')
+    axes[0].set_xlabel('a')
+    axes[0].set_ylabel('b')
+    axes[0].set_xticks(range(len(a_states)))
+    axes[0].set_xticklabels(a_labels)
+    axes[0].set_yticks(range(len(b_states)))
+    axes[0].set_yticklabels(b_labels)
+    axes[0].set_aspect('equal')
+    axes[0].figure.colorbar(axes[0].images[0], ax=axes[0])
+
+    # Create the heatmap plot for current
+    axes[1].imshow(I_arr, cmap='YlGnBu', origin='lower')
+    axes[1].set_title('Current Heatmap')
+    axes[1].set_xlabel('a')
+    axes[1].set_ylabel('b')
+    axes[1].set_xticks(range(len(a_states)))
+    axes[1].set_xticklabels(a_labels)
+    axes[1].set_yticks(range(len(b_states)))
+    axes[1].set_yticklabels(b_labels)
+    axes[1].set_aspect('equal')
+    axes[1].figure.colorbar(axes[1].images[0], ax=axes[1])
+
+    # Create the heatmap plot for expectation values
+    axes[2].imshow(exp_values_arr, cmap='YlGnBu', origin='lower')
+    axes[2].set_title('Expectation Value Heatmap')
+    axes[2].set_xlabel('a')
+    axes[2].set_ylabel('b')
+    axes[2].set_xticks(range(len(a_states)))
+    axes[2].set_xticklabels(a_labels)
+    axes[2].set_yticks(range(len(b_states)))
+    axes[2].set_yticklabels(b_labels)
+    axes[2].set_aspect('equal')
+    axes[2].figure.colorbar(axes[2].images[0], ax=axes[2])
+
+    plt.tight_layout()
+    fig.savefig('heatmap.png')
+
+    for i in range(len(axes)):
+        box = axes[i].get_tightbbox(fig.canvas.get_renderer())
+        fig.savefig("subplot{}.png".format(i), bbox_inches=box.transformed(fig.dpi_scale_trans.inverted()))
 
     plt.show()
