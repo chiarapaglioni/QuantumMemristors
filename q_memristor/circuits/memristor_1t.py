@@ -1,5 +1,7 @@
 from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister
 from qiskit.circuit.library import RYGate
+
+from q_memristor.circuits.csv_generator import csv_gen
 from q_memristor.circuits.simulator import IBMQSimulator
 from q_memristor.numerical.num_memristor import memristor
 import numpy as np
@@ -20,17 +22,22 @@ import matplotlib.pyplot as plt
 """
 
 backend_string = 'qasm_simulator'
-shots = 10000
+shots = 50000
 
 sim = IBMQSimulator(backend_string, shots)
 
 # Original parameters of a and b:
 a0 = np.pi / 4
 b0 = np.pi / 5
-a_states = [0, np.pi / 6, np.pi / 4, np.pi / 3, np.pi / 2]
-b_states = [0, np.pi / 2, np.pi, (3 * np.pi) / 2, 2 * np.pi]
-a_labels = ['0', '\u03C0/6', '\u03C0/4', '\u03C0/3', '\u03C0/2']
-b_labels = ['0', '\u03C0/2', '\u03C0', '3\u03C0/2', '2\u03C0']
+# a_states = [0, np.pi / 6, np.pi / 4, np.pi / 3, np.pi / 2]
+# b_states = [0, np.pi / 2, np.pi, (3 * np.pi) / 2, 2 * np.pi]
+a_states = [0, np.pi / 9, np.pi / 6, np.pi / 5, np.pi / 4, np.pi / 3, np.pi / 2]
+b_states = [0, np.pi / 6, np.pi / 4, np.pi / 2, np.pi, (3 * np.pi) / 2, 2 * np.pi]
+
+# a_labels = ['0', '\u03C0/6', '\u03C0/4', '\u03C0/3', '\u03C0/2']
+# b_labels = ['0', '\u03C0/2', '\u03C0', '3\u03C0/2', '2\u03C0']
+a_labels = ['0', '\u03C0/9', '\u03C0/6', '\u03C0/5', '\u03C0/4', '\u03C0/3', '\u03C0/2']
+b_labels = ['0', '\u03C0/6', '\u03C0/4', '\u03C0/2', '\u03C0', '3\u03C0/2', '2\u03C0']
 
 # print(a_labels)
 # print(b_labels)
@@ -109,7 +116,7 @@ if __name__ == '__main__':
         # print(circuit.decompose().draw())
 
         # Save image of final circuit
-        circuit.draw('mpl', filename='figures/1t_circuit.png')
+        # circuit.draw('mpl', filename='figures/1t_circuit.png')
 
         counts, measurements, exp_value = sim.execute_circuit(circuit)
 
@@ -143,6 +150,11 @@ if __name__ == '__main__':
     I_arr = np.array(I)
     exp_values_arr = np.array(exp_values)
 
+    # Save data into csv file
+    csvGen = csv_gen('data/data_mem_1t.csv')
+    csvGen.write_data(labels, V_arr, I_arr, exp_values_arr)
+
+    # Plot data in heatmap
     V_arr = V_arr.reshape(a_mesh.shape)
     I_arr = I_arr.reshape(a_mesh.shape)
     exp_values_arr = exp_values_arr.reshape(a_mesh.shape)
