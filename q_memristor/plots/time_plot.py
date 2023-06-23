@@ -8,9 +8,10 @@ import matplotlib.pyplot as plt
 
 
 class Tplot:
-    def __init__(self):
+    def __init__(self, bool_dyn):
         self.fig, self.ax = plt.subplots(figsize=(10, 5))
         self.ax.axhline(0, color='black', linewidth=0.5)
+        self.bool_dyn = bool_dyn
         self.xs = []
         self.voltages = []
         self.currents = []
@@ -34,10 +35,11 @@ class Tplot:
         self.ax.plot(self.xs, self.currents, 'ro-', markersize=1, label='Current')
 
         self.ax.set_xlim(0, t+0.1)
-        # Static:
-        # self.ax.set_ylim(-0.3, 0.3)
-        # Dynamic:
-        self.ax.set_ylim(-1.5, 1.5)
+
+        if self.bool_dyn:
+            self.ax.set_ylim(-1.5, 1.5)
+        else:
+            self.ax.set_ylim(-0.3, 0.3)
 
         if not self.labels_displayed:
             self.ax.legend()
@@ -46,4 +48,7 @@ class Tplot:
         plt.pause(0.001)
 
     def save_plot(self):
-        self.fig.savefig('figures/time_plot.png')
+        if self.bool_dyn:
+            self.fig.savefig('figures/time_plot_dyn.png')
+        else:
+            self.fig.savefig('figures/time_plot_stat.png')

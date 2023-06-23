@@ -9,4 +9,3 @@ class csv_gen:
         with open(self.filename, 'w', newline='') as file:
             writer = csv.writer(file)
             writer.writerows(data)
-        print(f"Data successfully written to {self.filename}.")

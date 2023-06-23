@@ -44,12 +44,15 @@ if __name__ == '__main__':
 
     mem = memristor(y0, w, h, m, a, b)
 
-    t_plot = Tplot()
-    iv_plot = IVplot(V[0], I[0])
+    dyn_bool = True
+    end_bool = False
+
+    t_plot = Tplot(dyn_bool)
+    iv_plot = IVplot(V[0], I[0], dyn_bool)
 
     for i in range(len(t)-1):
         t_plot.update(t[i], V[i], I[i])
-        iv_plot.update(V[i], I[i])
+        iv_plot.update(V[i], I[i], end_bool)
 
         i_memVal = mem.gamma(t[i])*V[i]
         I_mem.append(i_memVal)
