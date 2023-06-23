@@ -32,7 +32,7 @@ w = 1
 m = 1
 h = 1
 
-pure_state = [np.cos(a), np.sin(a) * np.exp(1j * b)]
+pure_state = np.array([np.cos(a), np.sin(a) * np.exp(1j * b)], dtype=complex)
 
 backend_string = 'qasm_simulator'
 shots = 50000

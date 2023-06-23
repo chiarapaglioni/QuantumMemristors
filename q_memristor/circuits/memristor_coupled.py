@@ -2,6 +2,7 @@ from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister
 from qiskit.circuit.library import RYGate
 import numpy as np
 
+from q_memristor.circuits.csv_generator import csv_gen
 from q_memristor.circuits.simulator import IBMQSimulator
 from q_memristor.circuits.t_plot_circuit import Tplot
 from q_memristor.numerical.num_memristor import memristor
@@ -29,7 +30,7 @@ m = 1
 h = 1
 delta = 1
 
-pure_state = [a, b]
+pure_state = np.array([a, b], dtype=complex)
 
 backend_string = 'qasm_simulator'
 shots = 50000
@@ -41,6 +42,7 @@ t_plot = Tplot()
 
 V = []
 I = []
+thetas = np.empty((len(t)))
 
 if __name__ == '__main__':
 
@@ -71,12 +73,13 @@ if __name__ == '__main__':
 
         print('Time-step: ', t[i])
 
-        theta = np.arccos(np.exp(mem.k(t[i], t[i + 1])))
-        print('Theta: ', theta)
-
         # EVOLUTION PROCESS
         for j in range(i+1):
             evol_qc = QuantumCircuit(Q_env1, Q_sys1, Q_sys2, Q_env2, name='evolution')
+
+            theta = np.arccos(np.exp(mem.k(t[j], t[j + 1])))
+            print('Theta: ', theta, ' at time: ', t[j])
+            thetas[j] = theta
 
             # Implementation of controlled-RY (cry) gate
             cry1 = RYGate(theta).control(1)
@@ -137,3 +140,7 @@ if __name__ == '__main__':
         t_plot.update(t[i], V[i], I[i])
 
     t_plot.save_plot('figures/plot_coupled_circuit.png')
+
+    # Save data into csv file
+    csvGen = csv_gen('data/data_mem_coupled.csv')
+    csvGen.write_data(t, V, I, expectation_values, thetas)

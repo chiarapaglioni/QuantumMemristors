@@ -1,7 +1,6 @@
 from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister
 from qiskit.circuit.library import RYGate
-import seaborn as sns
-
+from qiskit.visualization import circuit_drawer
 from q_memristor.circuits.csv_generator import csv_gen
 from q_memristor.circuits.simulator import IBMQSimulator
 from q_memristor.numerical.num_memristor import memristor
@@ -65,7 +64,7 @@ t = 0.1
 
 
 def get_purestate(a_val, b_val):
-    return [np.cos(a_val), np.sin(a_val) * np.exp(1j * b_val)]
+    return np.array([np.cos(a_val), np.sin(a_val) * np.exp(1j * b_val)], dtype=complex)
 
 
 if __name__ == '__main__':
@@ -118,6 +117,7 @@ if __name__ == '__main__':
 
         # Save image of final circuit
         # circuit.draw('mpl', filename='figures/1t_circuit.png')
+        circuit_drawer(circuit, output='mpl', filename='figures/1t_circuit.png')
 
         counts, measurements, exp_value = sim.execute_circuit(circuit)
 

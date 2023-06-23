@@ -1,6 +1,8 @@
 from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister
 from qiskit.circuit.library import RYGate
 import numpy as np
+
+from q_memristor.circuits.csv_generator import csv_gen
 from simulator import IBMQSimulator
 from q_memristor.numerical.num_memristor import memristor
 from q_memristor.circuits.t_plot_circuit import Tplot
@@ -32,7 +34,7 @@ w = 1
 m = 1
 h = 1
 
-pure_state = [np.cos(a), np.sin(a) * np.exp(1j * b)]
+pure_state = np.array([np.cos(a), np.sin(a) * np.exp(1j * b)], dtype=complex)
 
 backend_string = 'qasm_simulator'
 shots = 50000
@@ -44,6 +46,7 @@ t_plot = Tplot()
 
 V = []
 I = []
+thetas = np.empty((len(t)))
 
 if __name__ == '__main__':
 
@@ -84,9 +87,10 @@ if __name__ == '__main__':
             evol_qc = QuantumCircuit(Q_env, Q_sys, name='evolution')
             # Apply cry gate to each timestep of the evolution
             for j in range(i+1):
-                # theta = np.arccos(np.exp(mem.k(t[j], t[j + 1])))
+                theta = np.arccos(np.exp(mem.k(t[j], t[j + 1])))
                 # print('K: ', mem.k(t[j], t[j + 1]))
                 print('Theta: ', theta, ' at time: ', t[j])
+                thetas[j] = theta
 
                 # Implementation of controlled-RY (cry) gate
                 cry = RYGate(theta).control(1)
@@ -113,7 +117,7 @@ if __name__ == '__main__':
         # print(circuit.decompose().draw())
 
         # Save image of final circuit
-        # circuit.decompose().draw('mpl', filename='figures/dynamic_circuit2.png')
+        circuit.decompose().draw('mpl', filename='figures/dynamic_circuit2.png')
 
         # Execute the circuit using the simulator
         counts, measurements, exp_value = sim.execute_circuit(circuit)
@@ -138,6 +142,10 @@ if __name__ == '__main__':
         t_plot.update(t[i], V[i], I[i])
 
     t_plot.save_plot('figures/plot_dynamic_circuit2.png')
+
+    # Save data into csv file
+    csvGen = csv_gen('data/data_mem_dynamic2.csv')
+    csvGen.write_data(t, V, I, expectation_values, thetas)
 
     # TEST EXPECTATION VALUE
     # Calculate expectation values increasing the number of shots at each iteration
