@@ -34,7 +34,10 @@ class Tplot:
         self.ax.plot(self.xs, self.currents, 'ro-', markersize=1, label='Current')
 
         self.ax.set_xlim(0, t+0.1)
-        self.ax.set_ylim(-0.4, 0.1)
+        # Static:
+        # self.ax.set_ylim(-0.3, 0.3)
+        # Dynamic:
+        self.ax.set_ylim(-1.5, 1.5)
 
         if not self.labels_displayed:
             self.ax.legend()

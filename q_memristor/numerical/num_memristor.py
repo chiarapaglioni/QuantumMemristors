@@ -35,8 +35,8 @@ class memristor:
             Update of function k(t) based on timestep ts
             (Eq. 14 from "Quantum Memristors with Quantum Computers")
         """
-        integrand = lambda t_prime: self.gamma(t_prime)
-        result, _ = quad(integrand, 0, ts)
+        integ = lambda t_prime: self.gamma(t_prime)
+        result = quad(integ, 0, ts)[0]
         return -result / 2
 
     def k(self, ts, ts_next):
@@ -45,8 +45,8 @@ class memristor:
             - ts = lower bound of integral
             - ts_next = upper bound of integral
         """
-        integrand = lambda t_prime: self.gamma(t_prime)
-        result, _ = quad(integrand, ts, ts_next)
+        integ = lambda t_prime: self.gamma(t_prime)
+        result = quad(integ, ts, ts_next)[0]
         return -result / 2
 
     def oscillatory_k(self, t1, t2):

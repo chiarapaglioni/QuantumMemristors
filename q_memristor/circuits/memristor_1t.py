@@ -1,5 +1,6 @@
 from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister
 from qiskit.circuit.library import RYGate
+import seaborn as sns
 
 from q_memristor.circuits.csv_generator import csv_gen
 from q_memristor.circuits.simulator import IBMQSimulator
@@ -31,13 +32,13 @@ a0 = np.pi / 4
 b0 = np.pi / 5
 # a_states = [0, np.pi / 6, np.pi / 4, np.pi / 3, np.pi / 2]
 # b_states = [0, np.pi / 2, np.pi, (3 * np.pi) / 2, 2 * np.pi]
-a_states = [0, np.pi / 9, np.pi / 6, np.pi / 5, np.pi / 4, np.pi / 3, np.pi / 2]
-b_states = [0, np.pi / 6, np.pi / 4, np.pi / 2, np.pi, (3 * np.pi) / 2, 2 * np.pi]
+a_states = [0, np.pi / 12, np.pi / 9, np.pi / 6, np.pi / 5, np.pi / 4, np.pi / 3, np.pi / 2]
+b_states = [0, np.pi / 6, np.pi / 5, np.pi / 4, np.pi / 2, np.pi, (3 * np.pi) / 2, 2 * np.pi]
 
 # a_labels = ['0', '\u03C0/6', '\u03C0/4', '\u03C0/3', '\u03C0/2']
 # b_labels = ['0', '\u03C0/2', '\u03C0', '3\u03C0/2', '2\u03C0']
-a_labels = ['0', '\u03C0/9', '\u03C0/6', '\u03C0/5', '\u03C0/4', '\u03C0/3', '\u03C0/2']
-b_labels = ['0', '\u03C0/6', '\u03C0/4', '\u03C0/2', '\u03C0', '3\u03C0/2', '2\u03C0']
+a_labels = ['0', '\u03C0/12', '\u03C0/9', '\u03C0/6', '\u03C0/5', '\u03C0/4', '\u03C0/3', '\u03C0/2']
+b_labels = ['0', '\u03C0/6', '\u03C0/5', '\u03C0/4', '\u03C0/2', '\u03C0', '3\u03C0/2', '2\u03C0']
 
 # print(a_labels)
 # print(b_labels)
@@ -154,15 +155,20 @@ if __name__ == '__main__':
     csvGen = csv_gen('data/data_mem_1t.csv')
     csvGen.write_data(labels, V_arr, I_arr, exp_values_arr)
 
-    # Plot data in heatmap
-    V_arr = V_arr.reshape(a_mesh.shape)
-    I_arr = I_arr.reshape(a_mesh.shape)
-    exp_values_arr = exp_values_arr.reshape(a_mesh.shape)
+    V_arr = V_arr.reshape(b_mesh.shape)
+    V_arr = np.transpose(V_arr)
+    I_arr = I_arr.reshape(b_mesh.shape)
+    I_arr = np.transpose(I_arr)
+    exp_values_arr = exp_values_arr.reshape(b_mesh.shape)
+    exp_values_arr = np.transpose(exp_values_arr)
+
+    # Plot the heatmap using seaborn
+    # sns.heatmap(V_arr, cmap='coolwarm', annot=True, fmt=".2f")
 
     fig, axes = plt.subplots(3, 1, figsize=(7, 9))
 
     axes[0].imshow(V_arr, cmap='YlGnBu', origin='lower')
-    axes[0].set_title('Voltage Heatmap')
+    axes[0].set_title('Voltage <V>')
     axes[0].set_xlabel('a')
     axes[0].set_ylabel('b')
     axes[0].set_xticks(range(len(a_states)))
@@ -173,7 +179,7 @@ if __name__ == '__main__':
     axes[0].figure.colorbar(axes[0].images[0], ax=axes[0])
 
     axes[1].imshow(I_arr, cmap='YlGnBu', origin='lower')
-    axes[1].set_title('Current Heatmap')
+    axes[1].set_title('Current <I>')
     axes[1].set_xlabel('a')
     axes[1].set_ylabel('b')
     axes[1].set_xticks(range(len(a_states)))
@@ -184,7 +190,7 @@ if __name__ == '__main__':
     axes[1].figure.colorbar(axes[1].images[0], ax=axes[1])
 
     axes[2].imshow(exp_values_arr, cmap='YlGnBu', origin='lower')
-    axes[2].set_title('Expectation Value Heatmap')
+    axes[2].set_title('Expectation Values of Pauli Y Operator')
     axes[2].set_xlabel('a')
     axes[2].set_ylabel('b')
     axes[2].set_xticks(range(len(a_states)))
